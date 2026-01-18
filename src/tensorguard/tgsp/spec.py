@@ -1,0 +1,25 @@
+"""
+TGSP 1.0 Specification Constants
+"""
+
+VERSION = "1.0.0"
+MAGIC = b"TGSP"
+
+# Path Rules
+META_DIR = "META"
+POLICY_DIR = "POLICY"
+PAYLOAD_DIR = "PAYLOAD"
+KEYS_DIR = "KEYS"
+EVIDENCE_DIR = "EVIDENCE"
+
+MANIFEST_PATH = f"{META_DIR}/manifest.cbor"
+SIGNATURE_PATH = f"{META_DIR}/manifest.sig"
+POLICY_PATH = f"{POLICY_DIR}/policy.yaml"
+POLICY_HASH_PATH = f"{POLICY_DIR}/policy.hash"
+RECIPIENTS_PATH = f"{KEYS_DIR}/recipients.cbor"
+
+# Algorithms (Aligned with RFC 9180 HPKE suite)
+DEFAULT_CIPHER = "ChaCha20-Poly1305"
+DEFAULT_SIGNATURE = "Ed25519"
+DEFAULT_KEM = "X25519+HKDF-SHA256"
+DEFAULT_HASH = "SHA-256"

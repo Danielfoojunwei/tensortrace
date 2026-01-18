@@ -1,0 +1,85 @@
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ============================================
+# SECURITY: Keys and Secrets (NEVER COMMIT)
+# ============================================
+# All key material directories
+keys/
+secrets/
+credentials/
+
+# Private keys and certificates
+*.key
+*.pem
+*.p12
+*.pfx
+*.priv
+*.secret
+
+# Environment files with secrets
+.env
+.env.*
+!.env.example
+
+# ============================================
+# TGSP Security Artifacts
+# ============================================
+*.tgsp
+*.pub
+recovered_assets/
+storage/
+
+# ============================================
+# Database files
+# ============================================
+*.db
+*.sqlite
+*.sqlite3
+
+# ============================================
+# Build and Test Artifacts
+# ============================================
+artifacts/
+!artifacts/.gitkeep
+tests/keys_tmp/
+htmlcov/
+.coverage
+coverage.xml
+
+# ============================================
+# OS files
+# ============================================
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Logs
+# ============================================
+*.log
+logs/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+*.zip
