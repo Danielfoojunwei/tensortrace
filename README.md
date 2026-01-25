@@ -4,7 +4,7 @@
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://python.org)
 [![License](https://img.shields.io/badge/License-Apache%202.0-orange.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-186%20passed-green.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-196%20passed-green.svg)]()
 
 ---
 
@@ -263,42 +263,58 @@ Expert categories:
 
 ## Benchmarking
 
-### Benchmark Harness
-
-The benchmarking harness measures empirical performance:
+### Benchmark Commands
 
 ```bash
-# Full benchmark suite
+# Unit benchmarks (offline, no server required)
+make bench-unit
+
+# Performance regression tests
+make bench-test
+
+# Full API benchmark suite (requires running server)
 make bench-full
 
-# Quick benchmark (5 iterations)
-make bench-quick
-
-# Generate report
+# Generate analysis report
 make bench-report
-
-# Run regression tests
-make bench-regression
 ```
 
-### Measured Metrics
+### Empirical Performance (Measured)
+
+Benchmarks measured on Linux x86_64 with Python 3.11:
+
+| Operation | Mean | p95 | Throughput |
+|-----------|------|-----|------------|
+| **N2HE Encrypt 1KB** | 16.3ms | 17.3ms | 61 ops/s |
+| **N2HE Encrypt 10KB** | 170.8ms | 185.1ms | 5.9 ops/s |
+| **N2HE Decrypt 1KB** | 2.5ms | 2.6ms | 396 ops/s |
+| **Ed25519 Sign** | 0.04ms | 0.06ms | 23,800 ops/s |
+| **Ed25519 Verify** | 0.10ms | 0.12ms | 9,780 ops/s |
+| **Serialize 100KB** | 0.02ms | 0.02ms | 54,600 ops/s |
+| **LWE Serialize (100 batch)** | 0.001ms | - | 714,286 ops/s |
+
+### Regression Test Thresholds
+
+Performance baselines are enforced in CI via `benchmarks/baseline.json`:
+
+| Metric | Threshold | Description |
+|--------|-----------|-------------|
+| N2HE Encrypt 1KB (mean) | < 50ms | LWE encryption with Skellam noise |
+| N2HE Decrypt 1KB (mean) | < 10ms | Secret key decryption |
+| Ed25519 Sign (mean) | < 1ms | Classical signature |
+| Serialize 100KB (mean) | < 5ms | UpdatePackage msgpack |
+
+Run `python -m pytest tests/benchmarks/test_performance_regression.py -v` to verify.
+
+### API Benchmarks (Server Required)
+
+When a TensorGuardFlow server is running:
 
 | Category | Metrics |
 |----------|---------|
 | **HTTP API** | Latency (p50, p95, p99), throughput (req/s), error rate |
 | **Telemetry** | Ingestion rate (events/s), batch processing time |
 | **Resources** | CPU utilization, memory usage, disk I/O |
-| **Crypto** | Encryption/decryption latency, key generation time |
-
-### Academic Benchmark Comparison
-
-Based on published research benchmarks:
-
-| Benchmark | Reference | Measured |
-|-----------|-----------|----------|
-| PlantD (Telemetry) | 10K-100K events/s | Target: 50K events/s |
-| OpenTelemetry Collector | 25K spans/s | Target: 20K spans/s |
-| SProBench API Latency | p99 < 100ms | Target: p99 < 50ms |
 
 ---
 
@@ -354,7 +370,7 @@ pytest tests/ -v -m "not requires_liboqs"
 pytest tests/ --cov=tensorguard --cov-report=html
 ```
 
-Current test status: **186 passed, 17 skipped** (optional dependencies)
+Current test status: **196 passed, 17 skipped** (optional dependencies)
 
 ---
 

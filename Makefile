@@ -1,7 +1,7 @@
 # Makefile for TensorGuardFlow
 # Automation for build, test, and security verification
 
-.PHONY: install test agent bench bench-full bench-quick bench-report bench-regression bench-ci clean reports lint setup ci typecheck
+.PHONY: install test agent bench bench-unit bench-test bench-full bench-quick bench-report bench-regression bench-ci clean reports lint setup ci typecheck
 
 # Default target
 all: test
@@ -44,6 +44,19 @@ bench:
 	export PYTHONPATH=src && python -m tensorguard.bench.cli privacy
 	@echo "--- Generating Benchmarking Report ---"
 	export PYTHONPATH=src && python -m tensorguard.bench.cli report
+
+# Unit Benchmarks (offline, no server required) - measures ACTUAL performance
+bench-unit:
+	@echo "=== TensorGuard Unit Benchmarks (Offline) ==="
+	@echo "Measuring actual crypto and serialization performance..."
+	@mkdir -p artifacts/benchmarks
+	python -m benchmarks.unit_benchmark --iterations 50 --output artifacts/benchmarks/unit_benchmark_results.json
+	@echo "Results saved to: artifacts/benchmarks/unit_benchmark_results.json"
+
+# Performance Regression Tests - validates against empirical baselines
+bench-test:
+	@echo "=== Performance Regression Tests ==="
+	python -m pytest tests/benchmarks/test_performance_regression.py -v
 
 # Performance Benchmarking Suite (HTTP, Telemetry, Resources)
 bench-full:
