@@ -2,7 +2,7 @@
 # Privacy-First ML Training API
 # ================================================================
 
-.PHONY: help install dev test lint typecheck serve clean qa bench evidence
+.PHONY: help install dev test lint typecheck serve clean qa bench evidence compliance compliance-smoke bench-llama3 bench-llama3-smoke
 
 SHELL := /bin/bash
 PYTHON := python3
@@ -36,6 +36,14 @@ help:
 	@echo "  make bench-full    Run full benchmarks"
 	@echo "  make evidence      Generate value evidence pack"
 	@echo "  make test-matrix   Run tests across privacy modes"
+	@echo ""
+	@echo "Compliance (ISO 27701, ISO 27001, SOC 2):"
+	@echo "  make compliance-smoke  Run quick compliance checks"
+	@echo "  make compliance        Generate full compliance evidence pack"
+	@echo ""
+	@echo "Llama3 LoRA Benchmarks:"
+	@echo "  make bench-llama3-smoke  Run smoke benchmark with compliance"
+	@echo "  make bench-llama3        Run full benchmark with compliance"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  make clean         Remove build artifacts"
@@ -155,6 +163,48 @@ evidence:
 test-matrix:
 	@mkdir -p $(REPORTS_DIR)/qa
 	$(PYTHON) scripts/qa/test_matrix.py
+
+# =============================================================================
+# Compliance Evidence (ISO 27701, ISO 27001, SOC 2)
+# =============================================================================
+
+compliance-smoke:
+	@echo "Running compliance smoke checks..."
+	@mkdir -p $(REPORTS_DIR)/compliance
+	$(PYTHON) scripts/compliance/collect_privacy_security_metrics.py --mode smoke
+	$(PYTHON) scripts/compliance/build_compliance_evidence.py
+	@echo "Compliance smoke check complete."
+
+compliance:
+	@echo "Running full compliance evidence collection..."
+	@mkdir -p $(REPORTS_DIR)/compliance
+	$(PYTHON) scripts/compliance/collect_privacy_security_metrics.py --mode full
+	$(PYTHON) scripts/compliance/build_compliance_evidence.py
+	@echo "Full compliance evidence pack generated."
+
+# =============================================================================
+# Llama3 LoRA Benchmark Suite (Training + Eval + Perf + Compliance)
+# =============================================================================
+
+bench-llama3-smoke:
+	@echo "Running Llama3 LoRA smoke benchmark..."
+	@mkdir -p $(REPORTS_DIR)/bench
+	@mkdir -p $(REPORTS_DIR)/compliance
+	$(PYTHON) scripts/bench/comparison/tensafe_vs_baseline.py --mode smoke
+	$(PYTHON) scripts/compliance/collect_privacy_security_metrics.py --mode smoke
+	$(PYTHON) scripts/compliance/build_compliance_evidence.py
+	$(PYTHON) scripts/bench/build_llama3_report.py --mode smoke
+	@echo "Llama3 smoke benchmark complete."
+
+bench-llama3:
+	@echo "Running full Llama3 LoRA benchmark with compliance..."
+	@mkdir -p $(REPORTS_DIR)/bench
+	@mkdir -p $(REPORTS_DIR)/compliance
+	$(PYTHON) scripts/bench/comparison/tensafe_vs_baseline.py --mode full
+	$(PYTHON) scripts/compliance/collect_privacy_security_metrics.py --mode full
+	$(PYTHON) scripts/compliance/build_compliance_evidence.py
+	$(PYTHON) scripts/bench/build_llama3_report.py --mode full
+	@echo "Full Llama3 benchmark with compliance complete."
 
 # =============================================================================
 # Utilities
