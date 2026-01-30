@@ -115,6 +115,16 @@ qa-full: qa test-matrix bench evidence
 	@echo "=========================================="
 
 # =============================================================================
+# E2E Tests
+# =============================================================================
+
+test-e2e:
+	$(PYTHON) -m pytest tests/e2e/ -v --tb=short -m "not slow"
+
+test-e2e-full:
+	FULL_E2E=1 $(PYTHON) -m pytest tests/e2e/ -v --tb=short -s
+
+# =============================================================================
 # Benchmarking
 # =============================================================================
 
@@ -125,6 +135,14 @@ bench:
 bench-full:
 	@mkdir -p $(REPORTS_DIR)/bench
 	$(PYTHON) scripts/bench/run_benchmarks.py --mode full
+
+bench-comparison:
+	@mkdir -p $(REPORTS_DIR)/bench
+	$(PYTHON) scripts/bench/comparison/tg_tinker_vs_baseline.py --mode smoke
+
+bench-comparison-full:
+	@mkdir -p $(REPORTS_DIR)/bench
+	$(PYTHON) scripts/bench/comparison/tg_tinker_vs_baseline.py --mode full
 
 # =============================================================================
 # Evidence & Test Matrix

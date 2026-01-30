@@ -12,28 +12,30 @@ A complete privacy-preserving machine learning training system featuring:
 __version__ = "3.0.0"
 __author__ = "Daniel Foo & The TG-Tinker Team"
 
-# Core cryptographic components
-from .crypto import (
-    sign_hybrid,
-    verify_hybrid,
-    generate_hybrid_keypair,
-)
+# Lazy imports to avoid circular dependencies and optional dependencies
+__all__ = ["__version__"]
 
-# TGSP secure packaging
-from .tgsp import TGSPService
+try:
+    from .crypto import (
+        sign_hybrid,
+        verify_hybrid,
+        generate_hybrid_keypair,
+    )
+    __all__.extend(["sign_hybrid", "verify_hybrid", "generate_hybrid_keypair"])
+except ImportError:
+    # PQC dependencies may not be installed
+    sign_hybrid = None
+    verify_hybrid = None
+    generate_hybrid_keypair = None
 
-# Edge client for TGSP
-from .edge import TGSPEdgeClient
+try:
+    from .tgsp.service import TGSPService
+    __all__.append("TGSPService")
+except ImportError:
+    TGSPService = None
 
-__all__ = [
-    # Version
-    "__version__",
-    # Crypto
-    "sign_hybrid",
-    "verify_hybrid",
-    "generate_hybrid_keypair",
-    # TGSP
-    "TGSPService",
-    # Edge
-    "TGSPEdgeClient",
-]
+try:
+    from .edge import TGSPEdgeClient
+    __all__.append("TGSPEdgeClient")
+except ImportError:
+    TGSPEdgeClient = None
