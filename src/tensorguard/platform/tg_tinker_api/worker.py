@@ -11,7 +11,7 @@ import time
 from datetime import datetime
 from typing import Any, Callable, Dict, Optional
 
-from .queue import Job, JobQueue, JobStatus, get_job_queue
+from .queue import Job, JobQueue, get_job_queue
 
 logger = logging.getLogger(__name__)
 
@@ -202,12 +202,14 @@ class MockMLBackend:
             completion = f" [Mock completion for step {model['step']}]"
             tokens_generated = min(len(completion.split()), max_tokens)
 
-            samples.append({
-                "prompt": prompt,
-                "completion": completion,
-                "tokens_generated": tokens_generated,
-                "finish_reason": "stop",
-            })
+            samples.append(
+                {
+                    "prompt": prompt,
+                    "completion": completion,
+                    "tokens_generated": tokens_generated,
+                    "finish_reason": "stop",
+                }
+            )
 
         return {
             "samples": samples,

@@ -9,7 +9,7 @@ import logging
 import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +117,7 @@ class RDPAccountant(PrivacyAccountant):
         """
         self.target_delta = target_delta
         self.orders = orders or self.DEFAULT_ORDERS
-        self._rdp_epsilons: Dict[float, float] = {order: 0.0 for order in self.orders}
+        self._rdp_epsilons: Dict[float, float] = dict.fromkeys(self.orders, 0.0)
 
     def step(
         self,
@@ -164,7 +164,7 @@ class RDPAccountant(PrivacyAccountant):
 
     def reset(self) -> None:
         """Reset the accountant."""
-        self._rdp_epsilons = {order: 0.0 for order in self.orders}
+        self._rdp_epsilons = dict.fromkeys(self.orders, 0.0)
 
     def _compute_rdp(
         self,
@@ -223,10 +223,7 @@ class MomentsAccountant(PrivacyAccountant):
         WARNING: This is not a real moments accountant implementation.
         Use opacus.privacy_analysis for production.
         """
-        logger.warning(
-            "MomentsAccountant is a placeholder. "
-            "Use a production privacy library for real guarantees."
-        )
+        logger.warning("MomentsAccountant is a placeholder. Use a production privacy library for real guarantees.")
 
         # Fallback to simple composition
         if noise_multiplier > 0:
@@ -252,10 +249,7 @@ class PRVAccountant(PrivacyAccountant):
     def __init__(self, target_delta: float = 1e-5):
         self.target_delta = target_delta
         self._total_epsilon = 0.0
-        logger.warning(
-            "PRVAccountant is a placeholder stub. "
-            "Consider using Google's dp-accounting library."
-        )
+        logger.warning("PRVAccountant is a placeholder stub. Consider using Google's dp-accounting library.")
 
     def step(
         self,

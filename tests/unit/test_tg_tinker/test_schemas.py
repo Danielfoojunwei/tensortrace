@@ -1,35 +1,29 @@
 """
 Unit tests for TG-Tinker SDK schemas.
+
+Note: This test requires the package to be installed (pip install -e .)
+The tg_tinker package is discovered via pythonpath in pytest.ini.
 """
 
-import sys
-from pathlib import Path
-
-# Ensure src is in path
-src_path = Path(__file__).parent.parent.parent.parent / "src"
-if str(src_path) not in sys.path:
-    sys.path.insert(0, str(src_path))
-
-import pytest
 from datetime import datetime
 
+import pytest
+
 from tg_tinker.schemas import (
-    LoRAConfig,
-    OptimizerConfig,
-    DPConfig,
-    TrainingConfig,
+    AuditLogEntry,
     BatchData,
-    ForwardBackwardRequest,
-    FutureStatus,
-    OperationType,
     DPAccountantType,
-    TrainingClientStatus,
+    DPConfig,
     DPMetrics,
+    EncryptionInfo,
     ForwardBackwardResult,
+    FutureStatus,
+    LoRAConfig,
+    OperationType,
+    OptimizerConfig,
     OptimStepResult,
     SaveStateResult,
-    EncryptionInfo,
-    AuditLogEntry,
+    TrainingConfig,
 )
 
 

@@ -189,10 +189,7 @@ class CiphertextSerializer:
         """
         # Verify params hash if present
         if serialized.params_hash and serialized.params_hash != params.get_hash():
-            logger.warning(
-                f"Parameter hash mismatch: expected {serialized.params_hash}, "
-                f"got {params.get_hash()}"
-            )
+            logger.warning(f"Parameter hash mismatch: expected {serialized.params_hash}, got {params.get_hash()}")
 
         if serialized.format == CiphertextFormat.BINARY:
             return self._deserialize_binary(serialized.data, params)
@@ -239,9 +236,7 @@ class CiphertextSerializer:
 
         return data
 
-    def _deserialize_binary(
-        self, data: bytes, params: HESchemeParams
-    ) -> Ciphertext:
+    def _deserialize_binary(self, data: bytes, params: HESchemeParams) -> Ciphertext:
         """Deserialize from binary format."""
         # Check compression flag
         compressed = data[0] == 0x01
@@ -287,9 +282,7 @@ class CiphertextSerializer:
         # a vector
         buf.write(ct.a.astype(np.int32).tobytes())
 
-    def _read_lwe_binary(
-        self, buf: BytesIO, params: HESchemeParams
-    ) -> LWECiphertext:
+    def _read_lwe_binary(self, buf: BytesIO, params: HESchemeParams) -> LWECiphertext:
         """Read LWE ciphertext from binary buffer."""
         level = struct.unpack(">B", buf.read(1))[0]
         noise_budget = struct.unpack(">f", buf.read(4))[0]
@@ -322,9 +315,7 @@ class CiphertextSerializer:
         buf.write(ct.c0.astype(np.int64).tobytes())
         buf.write(ct.c1.astype(np.int64).tobytes())
 
-    def _read_rlwe_binary(
-        self, buf: BytesIO, params: HESchemeParams
-    ) -> RLWECiphertext:
+    def _read_rlwe_binary(self, buf: BytesIO, params: HESchemeParams) -> RLWECiphertext:
         """Read RLWE ciphertext from binary buffer."""
         level = struct.unpack(">B", buf.read(1))[0]
         noise_budget = struct.unpack(">f", buf.read(4))[0]
@@ -356,9 +347,7 @@ class CiphertextSerializer:
             data["level"] = ciphertext.level
             data["noise_budget"] = ciphertext.noise_budget
             data["b"] = ciphertext.b
-            data["a"] = base64.b64encode(
-                ciphertext.a.astype(np.int32).tobytes()
-            ).decode("ascii")
+            data["a"] = base64.b64encode(ciphertext.a.astype(np.int32).tobytes()).decode("ascii")
             data["a_len"] = len(ciphertext.a)
 
         elif isinstance(ciphertext, RLWECiphertext):
@@ -366,27 +355,19 @@ class CiphertextSerializer:
             data["level"] = ciphertext.level
             data["noise_budget"] = ciphertext.noise_budget
             data["scale"] = ciphertext.scale
-            data["c0"] = base64.b64encode(
-                ciphertext.c0.astype(np.int64).tobytes()
-            ).decode("ascii")
-            data["c1"] = base64.b64encode(
-                ciphertext.c1.astype(np.int64).tobytes()
-            ).decode("ascii")
+            data["c0"] = base64.b64encode(ciphertext.c0.astype(np.int64).tobytes()).decode("ascii")
+            data["c1"] = base64.b64encode(ciphertext.c1.astype(np.int64).tobytes()).decode("ascii")
             data["n"] = len(ciphertext.c0)
 
         return json.dumps(data, indent=2).encode("utf-8")
 
-    def _deserialize_json(
-        self, data: bytes, params: HESchemeParams
-    ) -> Ciphertext:
+    def _deserialize_json(self, data: bytes, params: HESchemeParams) -> Ciphertext:
         """Deserialize from JSON format."""
         obj = json.loads(data.decode("utf-8"))
 
         ct_type = obj.get("type")
         if ct_type == "lwe":
-            a = np.frombuffer(
-                base64.b64decode(obj["a"]), dtype=np.int32
-            )
+            a = np.frombuffer(base64.b64decode(obj["a"]), dtype=np.int32)
             return LWECiphertext(
                 a=a,
                 b=obj["b"],
@@ -395,12 +376,8 @@ class CiphertextSerializer:
                 noise_budget=obj.get("noise_budget"),
             )
         elif ct_type == "rlwe":
-            c0 = np.frombuffer(
-                base64.b64decode(obj["c0"]), dtype=np.int64
-            )
-            c1 = np.frombuffer(
-                base64.b64decode(obj["c1"]), dtype=np.int64
-            )
+            c0 = np.frombuffer(base64.b64decode(obj["c0"]), dtype=np.int64)
+            c1 = np.frombuffer(base64.b64decode(obj["c1"]), dtype=np.int64)
             return RLWECiphertext(
                 c0=c0,
                 c1=c1,
@@ -442,9 +419,7 @@ class CiphertextSerializer:
             logger.warning("cbor2 not available, falling back to JSON")
             return self._serialize_json(ciphertext)
 
-    def _deserialize_cbor(
-        self, data: bytes, params: HESchemeParams
-    ) -> Ciphertext:
+    def _deserialize_cbor(self, data: bytes, params: HESchemeParams) -> Ciphertext:
         """Deserialize from CBOR format."""
         try:
             import cbor2

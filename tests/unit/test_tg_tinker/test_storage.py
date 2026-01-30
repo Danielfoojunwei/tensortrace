@@ -4,15 +4,13 @@ Unit tests for TG-Tinker encrypted artifact storage.
 
 import os
 import secrets
-import tempfile
-from pathlib import Path
 
 import pytest
 
 from tensorguard.platform.tg_tinker_api.storage import (
-    LocalStorageBackend,
     EncryptedArtifactStore,
     KeyManager,
+    LocalStorageBackend,
 )
 
 

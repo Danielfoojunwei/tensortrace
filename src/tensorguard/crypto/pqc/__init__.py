@@ -34,18 +34,21 @@ Usage:
     is_valid = sig.verify(pk, b"message", signature)
 """
 
-import os
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
-from .kyber import Kyber768, is_liboqs_available as _kyber_available
-from .dilithium import Dilithium3, is_liboqs_available as _dilithium_available
 from .agility import PostQuantumKEM, PostQuantumSig
+from .dilithium import Dilithium3
+from .dilithium import is_liboqs_available as _dilithium_available
+from .kyber import Kyber768
+from .kyber import is_liboqs_available as _kyber_available
 
 
 class PQCSecurityError(RuntimeError):
     """Raised when PQC security requirements are not met."""
+
     pass
 
 
@@ -86,9 +89,7 @@ def enforce_pqc_strict_mode() -> None:
             raise PQCSecurityError(error_msg)
         logger.info("PQC strict mode: liboqs verified, using production cryptography")
     elif not is_pqc_production_ready():
-        raise PQCSecurityError(
-            "PQC libraries are required. Install liboqs: pip install tensorguard[pqc]."
-        )
+        raise PQCSecurityError("PQC libraries are required. Install liboqs: pip install tensorguard[pqc].")
 
 
 # Enforce on module import in production

@@ -323,9 +323,7 @@ class PrivateInferenceMode:
         encrypted_embeddings = []
         for pos in range(max_len):
             # Gather tokens at this position
-            pos_tokens = [
-                seq[pos] if pos < len(seq) else 0 for seq in token_ids
-            ]
+            pos_tokens = [seq[pos] if pos < len(seq) else 0 for seq in token_ids]
 
             # Look up embeddings (in real impl, this would be on client)
             embeddings = self._embedding_weights[pos_tokens]  # [batch, hidden]
@@ -419,9 +417,7 @@ class PrivateInferenceMode:
             key_bundle_id=encrypted_batch.key_bundle_id,
             computation_time_ms=computation_time_ms,
             layers_processed=layers_processed,
-            noise_budget_remaining=getattr(
-                encrypted_logits, "noise_budget", None
-            ) if encrypted_logits else None,
+            noise_budget_remaining=getattr(encrypted_logits, "noise_budget", None) if encrypted_logits else None,
             operations_performed=total_ops,
         )
 
@@ -483,10 +479,7 @@ class PrivateInferenceMode:
 
         # Mock tokenization if no tokenizer
         if tokenizer is None:
-            token_ids = [
-                [hash(c) % 32000 for c in prompt[:self.config.max_seq_len]]
-                for prompt in prompts
-            ]
+            token_ids = [[hash(c) % 32000 for c in prompt[: self.config.max_seq_len]] for prompt in prompts]
         else:
             encoded = tokenizer(
                 prompts,
@@ -608,9 +601,6 @@ def create_private_inference_mode(
     # Create mode
     mode = PrivateInferenceMode(config=config, key_manager=key_manager)
 
-    logger.info(
-        f"Created private inference mode for tenant {tenant_id}: "
-        f"profile={profile}, bundle={bundle.bundle_id}"
-    )
+    logger.info(f"Created private inference mode for tenant {tenant_id}: profile={profile}, bundle={bundle.bundle_id}")
 
     return mode, bundle

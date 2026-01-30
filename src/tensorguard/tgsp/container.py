@@ -5,12 +5,9 @@ SECURITY NOTE: This module implements deterministic packaging to ensure
 byte-for-byte reproducible artifacts for audit and verification.
 """
 
-import zipfile
 import os
-import io
-from typing import List, Dict
-from datetime import datetime
-from .crypto import get_sha256
+import zipfile
+from typing import Dict, List
 
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB safety limit
 
@@ -28,11 +25,11 @@ class TGSPContainer:
     - Sorted file ordering
     """
 
-    def __init__(self, path: str, mode: str = 'r'):
+    def __init__(self, path: str, mode: str = "r"):
         self.path = path
         self.mode = mode
         # Use ZIP_STORED (no compression) for determinism
-        compression = zipfile.ZIP_STORED if mode == 'w' else zipfile.ZIP_DEFLATED
+        compression = zipfile.ZIP_STORED if mode == "w" else zipfile.ZIP_DEFLATED
         self.zip = zipfile.ZipFile(path, mode=mode, compression=compression)
         self._pending_files: List[tuple] = []  # For deterministic ordering
 
@@ -45,7 +42,7 @@ class TGSPContainer:
         if len(data) > MAX_FILE_SIZE:
             raise ValueError(f"File {arcname} exceeds safety limit of {MAX_FILE_SIZE} bytes")
 
-        if self.mode == 'w':
+        if self.mode == "w":
             self._pending_files.append((arcname, data))
         else:
             raise ValueError("Cannot write to container opened in read mode")
@@ -68,6 +65,7 @@ class TGSPContainer:
 
     def get_inventory_hashes(self) -> Dict[str, str]:
         import hashlib
+
         hashes = {}
         for name in sorted(self.zip.namelist()):
             info = self.zip.getinfo(name)
@@ -93,7 +91,7 @@ class TGSPContainer:
 
     def close(self):
         """Close the container, writing pending files in sorted order."""
-        if self.mode == 'w' and self._pending_files:
+        if self.mode == "w" and self._pending_files:
             # Sort files by name for deterministic ordering
             for arcname, data in sorted(self._pending_files, key=lambda x: x[0]):
                 self._write_deterministic(arcname, data)
@@ -121,6 +119,7 @@ def extract_safely(zf: zipfile.ZipFile, name: str, out_dir: str):
         raise ValueError(f"Zip-Slip attempt detected: {name}")
 
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
-    with zf.open(name) as source, open(target_path, 'wb') as target:
+    with zf.open(name) as source, open(target_path, "wb") as target:
         import shutil
+
         shutil.copyfileobj(source, target)

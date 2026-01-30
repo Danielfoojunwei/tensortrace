@@ -19,7 +19,6 @@ Metrics collected:
 - RDP privacy accounting accuracy
 """
 
-import asyncio
 import hashlib
 import json
 import os
@@ -29,8 +28,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, patch
+from typing import Any, Dict, List
 
 import pytest
 
@@ -41,6 +39,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 @dataclass
 class TrainingMetrics:
     """Metrics collected during training."""
+
     # Timing metrics
     forward_backward_times: List[float] = field(default_factory=list)
     optim_step_times: List[float] = field(default_factory=list)
@@ -202,6 +201,7 @@ class TrainingMetrics:
 @dataclass
 class BaselineMetrics:
     """Baseline metrics for comparison (standard LoRA without TG-Tinker)."""
+
     forward_backward_times: List[float] = field(default_factory=list)
     optim_step_times: List[float] = field(default_factory=list)
     save_state_times: List[float] = field(default_factory=list)
@@ -305,9 +305,7 @@ class TGTinkerTrainingHarness:
 
     def _init_dp_accountant(self):
         """Initialize differential privacy accountant."""
-        from tensorguard.platform.tg_tinker_api.dp import (
-            DPConfig, RDPAccountant, clip_gradients, add_noise
-        )
+        from tensorguard.platform.tg_tinker_api.dp import DPConfig, RDPAccountant, add_noise, clip_gradients
 
         dp_config = self.config.get("dp_config", {})
         self.dp_config = DPConfig(
@@ -325,20 +323,15 @@ class TGTinkerTrainingHarness:
 
     def _init_encrypted_storage(self):
         """Initialize encrypted artifact storage."""
-        from tensorguard.platform.tg_tinker_api.storage import (
-            EncryptedArtifactStore, KeyManager, LocalStorageBackend
-        )
+        from tensorguard.platform.tg_tinker_api.storage import EncryptedArtifactStore, KeyManager, LocalStorageBackend
 
         self.key_manager = KeyManager()
         self.storage_backend = LocalStorageBackend(base_path="/tmp/tg_tinker_test")
-        self.artifact_store = EncryptedArtifactStore(
-            self.storage_backend, self.key_manager
-        )
+        self.artifact_store = EncryptedArtifactStore(self.storage_backend, self.key_manager)
 
     def _init_audit_logger(self):
         """Initialize hash-chained audit logger."""
         from tensorguard.platform.tg_tinker_api.audit import AuditLogger
-        import hashlib
 
         self.audit_logger = AuditLogger()
         self.tenant_id = "test-tenant"
@@ -366,8 +359,8 @@ class TGTinkerTrainingHarness:
     def _init_pqc_signer(self):
         """Initialize PQC signature components."""
         try:
-            from tensorguard.crypto.sig import sign_hybrid, verify_hybrid
             from tensorguard.crypto.kem import generate_hybrid_keypair
+            from tensorguard.crypto.sig import sign_hybrid, verify_hybrid
 
             self.sign_hybrid = sign_hybrid
             self.verify_hybrid = verify_hybrid
@@ -382,9 +375,7 @@ class TGTinkerTrainingHarness:
 
         # Forward pass
         forward_result = self.model.forward(
-            batch.get("input_ids", [[1, 2, 3]]),
-            batch.get("attention_mask"),
-            batch.get("labels")
+            batch.get("input_ids", [[1, 2, 3]]), batch.get("attention_mask"), batch.get("labels")
         )
 
         # Backward pass
@@ -408,6 +399,7 @@ class TGTinkerTrainingHarness:
         clip_start = time.perf_counter()
 
         import numpy as np
+
         batch_size = len(batch.get("input_ids", [[1]]))
 
         # Simulate per-sample norm computation
@@ -436,10 +428,7 @@ class TGTinkerTrainingHarness:
 
         # Audit log
         audit_start = time.perf_counter()
-        self._log(
-            operation="forward_backward",
-            details={"step": self.step, "loss": forward_result["loss"]}
-        )
+        self._log(operation="forward_backward", details={"step": self.step, "loss": forward_result["loss"]})
         self.metrics.audit_log_times.append(time.perf_counter() - audit_start)
 
         return {
@@ -468,6 +457,7 @@ class TGTinkerTrainingHarness:
         noise_start = time.perf_counter()
 
         import numpy as np
+
         noise_std = self.dp_config.noise_multiplier * self.dp_config.max_grad_norm
 
         # Simulate noise generation with GPU-like throughput
@@ -485,16 +475,14 @@ class TGTinkerTrainingHarness:
         noised_grad = self.add_noise(
             clipped_grad_norm=1.0,
             noise_multiplier=self.dp_config.noise_multiplier,
-            max_grad_norm=self.dp_config.max_grad_norm
+            max_grad_norm=self.dp_config.max_grad_norm,
         )
         self.metrics.noise_injection_times.append(time.perf_counter() - noise_start)
 
         # RDP accounting
         rdp_start = time.perf_counter()
         self.rdp_accountant.step(
-            noise_multiplier=self.dp_config.noise_multiplier,
-            sample_rate=self.sample_rate,
-            num_steps=1
+            noise_multiplier=self.dp_config.noise_multiplier, sample_rate=self.sample_rate, num_steps=1
         )
         epsilon, _ = self.rdp_accountant.get_privacy_spent()
         self.metrics.rdp_accounting_times.append(time.perf_counter() - rdp_start)
@@ -511,10 +499,7 @@ class TGTinkerTrainingHarness:
 
         # Audit
         audit_start = time.perf_counter()
-        self._log(
-            operation="optim_step",
-            details={"step": self.step, "epsilon": epsilon}
-        )
+        self._log(operation="optim_step", details={"step": self.step, "epsilon": epsilon})
         self.metrics.audit_log_times.append(time.perf_counter() - audit_start)
 
         return {
@@ -535,7 +520,7 @@ class TGTinkerTrainingHarness:
             "dp_state": {
                 "epsilon_spent": self.metrics.epsilon_values[-1] if self.metrics.epsilon_values else 0,
                 "steps": self.step,
-            }
+            },
         }
         state_bytes = json.dumps(state).encode()
         self.metrics.artifact_sizes.append(len(state_bytes))
@@ -553,7 +538,7 @@ class TGTinkerTrainingHarness:
             tenant_id=self.tenant_id,
             training_client_id=self.training_client_id,
             artifact_type="checkpoint",
-            metadata={"name": name, "step": self.step}
+            metadata={"name": name, "step": self.step},
         )
         artifact_id = artifact.id
         self._last_artifact = artifact  # Store for load_state
@@ -581,10 +566,7 @@ class TGTinkerTrainingHarness:
 
         # Audit
         audit_start = time.perf_counter()
-        self._log(
-            operation="save_state",
-            details={"artifact_id": artifact_id, "name": name}
-        )
+        self._log(operation="save_state", details={"artifact_id": artifact_id, "name": name})
         self.metrics.audit_log_times.append(time.perf_counter() - audit_start)
 
         return {
@@ -601,13 +583,13 @@ class TGTinkerTrainingHarness:
         # Decryption
         dec_start = time.perf_counter()
         # Use stored artifact or create a mock
-        if hasattr(self, '_last_artifact') and self._last_artifact.id == artifact_id:
+        if hasattr(self, "_last_artifact") and self._last_artifact.id == artifact_id:
             artifact = self._last_artifact
             data = self.artifact_store.load_artifact(artifact)
             metadata = artifact.metadata_json
         else:
             # Mock for testing
-            data = b'{}'
+            data = b"{}"
             metadata = {}
         self.metrics.decryption_times.append(time.perf_counter() - dec_start)
 
@@ -651,10 +633,7 @@ class TGTinkerTrainingHarness:
         self.metrics.inference_times.append(total_time)
 
         # Audit
-        self._log(
-            operation="inference",
-            details={"prompt_length": len(prompt), "output_tokens": max_new_tokens}
-        )
+        self._log(operation="inference", details={"prompt_length": len(prompt), "output_tokens": max_new_tokens})
 
         return {
             "output_ids": output_ids,
@@ -681,9 +660,7 @@ class BaselineTrainingHarness:
         start = time.perf_counter()
 
         forward_result = self.model.forward(
-            batch.get("input_ids", [[1, 2, 3]]),
-            batch.get("attention_mask"),
-            batch.get("labels")
+            batch.get("input_ids", [[1, 2, 3]]), batch.get("attention_mask"), batch.get("labels")
         )
         backward_result = self.model.backward()
 
@@ -742,10 +719,7 @@ class BaselineTrainingHarness:
         }
 
 
-def generate_comparison_report(
-    tg_metrics: TrainingMetrics,
-    baseline_metrics: BaselineMetrics
-) -> Dict[str, Any]:
+def generate_comparison_report(tg_metrics: TrainingMetrics, baseline_metrics: BaselineMetrics) -> Dict[str, Any]:
     """Generate comparison report between TG-Tinker and baseline."""
 
     tg_report = tg_metrics.to_report()
@@ -761,43 +735,37 @@ def generate_comparison_report(
         "timestamp": datetime.utcnow().isoformat(),
         "model": "meta-llama/Llama-3-8B",
         "test_type": "SFT with LoRA",
-
         "tg_tinker_metrics": tg_report,
         "baseline_metrics": baseline_report,
-
         "overhead_analysis": {
             "forward_backward_overhead_percent": calc_overhead(
                 tg_report["training_api"]["forward_backward_ms"]["mean"],
-                baseline_report["training_api"]["forward_backward_ms"]["mean"]
+                baseline_report["training_api"]["forward_backward_ms"]["mean"],
             ),
             "optim_step_overhead_percent": calc_overhead(
                 tg_report["training_api"]["optim_step_ms"]["mean"],
-                baseline_report["training_api"]["optim_step_ms"]["mean"]
+                baseline_report["training_api"]["optim_step_ms"]["mean"],
             ),
             "inference_overhead_percent": calc_overhead(
-                tg_report["inference"]["latency_ms"]["mean"],
-                baseline_report["inference"]["latency_ms"]["mean"]
+                tg_report["inference"]["latency_ms"]["mean"], baseline_report["inference"]["latency_ms"]["mean"]
             ),
             "total_training_time_overhead_percent": calc_overhead(
-                tg_metrics.total_training_time,
-                baseline_metrics.total_training_time
+                tg_metrics.total_training_time, baseline_metrics.total_training_time
             ),
         },
-
         "privacy_features_cost": {
             "dp_sgd_total_ms": (
-                tg_report["dp_sgd"]["gradient_clip_ms"]["mean"] +
-                tg_report["dp_sgd"]["noise_injection_ms"]["mean"] +
-                tg_report["dp_sgd"]["rdp_accounting_ms"]["mean"]
+                tg_report["dp_sgd"]["gradient_clip_ms"]["mean"]
+                + tg_report["dp_sgd"]["noise_injection_ms"]["mean"]
+                + tg_report["dp_sgd"]["rdp_accounting_ms"]["mean"]
             ),
             "encryption_per_save_ms": tg_report["encrypted_storage"]["encryption_ms"]["mean"],
             "audit_per_operation_ms": tg_report["hash_chain_audit"]["audit_log_ms"]["mean"],
             "pqc_signature_ms": (
-                tg_report["pqc_signatures"]["dilithium3_sign_ms"]["mean"] +
-                tg_report["pqc_signatures"]["ed25519_sign_ms"]["mean"]
+                tg_report["pqc_signatures"]["dilithium3_sign_ms"]["mean"]
+                + tg_report["pqc_signatures"]["ed25519_sign_ms"]["mean"]
             ),
         },
-
         "value_delivered": {
             "differential_privacy": {
                 "final_epsilon": tg_report["dp_sgd"]["final_epsilon"],
@@ -817,12 +785,11 @@ def generate_comparison_report(
                 "security_level": "NIST Level 3",
             },
         },
-
         "summary": {
             "privacy_overhead_acceptable": True,  # <20% is acceptable
             "training_completed": tg_metrics.steps_completed > 0,
             "all_invariants_maintained": True,
-        }
+        },
     }
 
     return comparison
@@ -831,6 +798,7 @@ def generate_comparison_report(
 # =============================================================================
 # Test Functions
 # =============================================================================
+
 
 @pytest.fixture
 def training_config():
@@ -860,11 +828,13 @@ def sample_batches():
     """Generate sample training batches."""
     batches = []
     for i in range(100):  # 100 batches for testing
-        batches.append({
-            "input_ids": [[j % 1000 for j in range(512)] for _ in range(8)],
-            "attention_mask": [[1] * 512 for _ in range(8)],
-            "labels": [[j % 1000 for j in range(512)] for _ in range(8)],
-        })
+        batches.append(
+            {
+                "input_ids": [[j % 1000 for j in range(512)] for _ in range(8)],
+                "attention_mask": [[1] * 512 for _ in range(8)],
+                "labels": [[j % 1000 for j in range(512)] for _ in range(8)],
+            }
+        )
     return batches
 
 
@@ -920,9 +890,11 @@ class TestLlama3SFTE2E:
             # Progress logging
             if tg_harness.step % 10 == 0:
                 elapsed = time.perf_counter() - tg_start
-                print(f"  Step {tg_harness.step}: loss={fb_result['loss']:.4f}, "
-                      f"ε={opt_result['epsilon_spent']:.4f}, "
-                      f"elapsed={elapsed:.1f}s")
+                print(
+                    f"  Step {tg_harness.step}: loss={fb_result['loss']:.4f}, "
+                    f"ε={opt_result['epsilon_spent']:.4f}, "
+                    f"elapsed={elapsed:.1f}s"
+                )
 
             batch_idx += 1
 
@@ -956,8 +928,7 @@ class TestLlama3SFTE2E:
 
             if baseline_harness.step % 10 == 0:
                 elapsed = time.perf_counter() - baseline_start
-                print(f"  Step {baseline_harness.step}: loss={fb_result['loss']:.4f}, "
-                      f"elapsed={elapsed:.1f}s")
+                print(f"  Step {baseline_harness.step}: loss={fb_result['loss']:.4f}, elapsed={elapsed:.1f}s")
 
             batch_idx += 1
 
@@ -995,10 +966,7 @@ class TestLlama3SFTE2E:
         print("PHASE 4: Metrics Report")
         print("=" * 60)
 
-        report = generate_comparison_report(
-            tg_harness.metrics,
-            baseline_harness.metrics
-        )
+        report = generate_comparison_report(tg_harness.metrics, baseline_harness.metrics)
 
         # Save report
         reports_dir = Path(__file__).parent.parent.parent / "reports" / "e2e"
@@ -1015,22 +983,22 @@ class TestLlama3SFTE2E:
         print("COMPARISON SUMMARY")
         print("=" * 60)
 
-        print(f"\n  TG-Tinker Training:")
+        print("\n  TG-Tinker Training:")
         print(f"    Steps completed: {report['tg_tinker_metrics']['training_summary']['steps_completed']}")
         print(f"    Total time: {report['tg_tinker_metrics']['training_summary']['total_training_time_seconds']:.1f}s")
         print(f"    Final epsilon: {report['tg_tinker_metrics']['dp_sgd']['final_epsilon']:.4f}")
 
-        print(f"\n  Baseline Training:")
+        print("\n  Baseline Training:")
         print(f"    Steps completed: {report['baseline_metrics']['training_summary']['steps_completed']}")
         print(f"    Total time: {report['baseline_metrics']['training_summary']['total_training_time_seconds']:.1f}s")
 
-        print(f"\n  Overhead Analysis:")
+        print("\n  Overhead Analysis:")
         print(f"    Forward/Backward: {report['overhead_analysis']['forward_backward_overhead_percent']:.1f}%")
         print(f"    Optimizer Step: {report['overhead_analysis']['optim_step_overhead_percent']:.1f}%")
         print(f"    Inference: {report['overhead_analysis']['inference_overhead_percent']:.1f}%")
         print(f"    Total Training: {report['overhead_analysis']['total_training_time_overhead_percent']:.1f}%")
 
-        print(f"\n  Privacy Features Cost (per operation):")
+        print("\n  Privacy Features Cost (per operation):")
         print(f"    DP-SGD total: {report['privacy_features_cost']['dp_sgd_total_ms']:.2f}ms")
         print(f"    Encryption: {report['privacy_features_cost']['encryption_per_save_ms']:.2f}ms")
         print(f"    Audit logging: {report['privacy_features_cost']['audit_per_operation_ms']:.2f}ms")
@@ -1043,8 +1011,7 @@ class TestLlama3SFTE2E:
         assert report["summary"]["all_invariants_maintained"], "Privacy invariants violated"
 
         # Overhead should be reasonable (<50%)
-        assert report["overhead_analysis"]["total_training_time_overhead_percent"] < 50, \
-            "Privacy overhead exceeds 50%"
+        assert report["overhead_analysis"]["total_training_time_overhead_percent"] < 50, "Privacy overhead exceeds 50%"
 
         return report
 

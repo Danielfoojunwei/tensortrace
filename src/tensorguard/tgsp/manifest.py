@@ -1,10 +1,10 @@
-
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field
-import time
-from ..evidence.canonical import canonical_bytes
-from ..evidence.store import get_store
 import secrets
+import time
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field
+
+from ..evidence.canonical import canonical_bytes
 
 
 class HESchemeConfig(BaseModel):
@@ -17,8 +17,7 @@ class HESchemeConfig(BaseModel):
     noise_std_dev: float = Field(default=3.2, description="Gaussian noise standard deviation")
     polynomial_degree: int = Field(default=4096, description="Polynomial ring degree (N)")
     coefficient_modulus_bits: List[int] = Field(
-        default_factory=lambda: [60, 40, 40, 60],
-        description="Coefficient modulus chain (RNS)"
+        default_factory=lambda: [60, 40, 40, 60], description="Coefficient modulus chain (RNS)"
     )
     security_level: int = Field(default=128, description="Security level in bits (NIST standard)")
     bootstrap_enabled: bool = Field(default=False, description="Whether bootstrapping is enabled")
@@ -32,8 +31,7 @@ class HEKeyInfo(BaseModel):
     key_bundle_id: Optional[str] = Field(default=None, description="Key bundle identifier")
     key_generation_timestamp: Optional[str] = Field(default=None, description="ISO timestamp of key generation")
     capabilities: List[str] = Field(
-        default_factory=lambda: ["matmul", "add", "scale"],
-        description="Supported HE operations"
+        default_factory=lambda: ["matmul", "add", "scale"], description="Supported HE operations"
     )
 
 
@@ -60,54 +58,31 @@ class PrivacyClaims(BaseModel):
     # Profile configuration
     profile: Optional[str] = Field(
         default=None,
-        description="N2HE profile: 'router_only', 'router_plus_eval', 'encrypted_lora', 'private_inference'"
+        description="N2HE profile: 'router_only', 'router_plus_eval', 'encrypted_lora', 'private_inference'",
     )
 
     # HE scheme configuration (detailed)
-    scheme_config: Optional[HESchemeConfig] = Field(
-        default=None,
-        description="Detailed HE scheme configuration"
-    )
+    scheme_config: Optional[HESchemeConfig] = Field(default=None, description="Detailed HE scheme configuration")
     scheme_params_hash: Optional[str] = Field(
-        default=None,
-        description="Hash of HE scheme parameters for quick verification"
+        default=None, description="Hash of HE scheme parameters for quick verification"
     )
 
     # Key information
-    key_info: Optional[HEKeyInfo] = Field(
-        default=None,
-        description="Information about HE keys"
-    )
+    key_info: Optional[HEKeyInfo] = Field(default=None, description="Information about HE keys")
 
     # Encrypted artifacts in this package
     encrypted_artifacts: List[EncryptedArtifactInfo] = Field(
-        default_factory=list,
-        description="List of encrypted compute artifacts"
+        default_factory=list, description="List of encrypted compute artifacts"
     )
 
     # Deployment metadata
-    sidecar_image_digest: Optional[str] = Field(
-        default=None,
-        description="Docker digest of N2HE sidecar image"
-    )
-    encrypted_feature_schema_hash: Optional[str] = Field(
-        default=None,
-        description="Hash of encrypted feature schema"
-    )
-    router_model_hash: Optional[str] = Field(
-        default=None,
-        description="Hash of encrypted router model (if applicable)"
-    )
+    sidecar_image_digest: Optional[str] = Field(default=None, description="Docker digest of N2HE sidecar image")
+    encrypted_feature_schema_hash: Optional[str] = Field(default=None, description="Hash of encrypted feature schema")
+    router_model_hash: Optional[str] = Field(default=None, description="Hash of encrypted router model (if applicable)")
 
     # Audit and compliance
-    privacy_receipt_hash: Optional[str] = Field(
-        default=None,
-        description="Hash of privacy computation receipt"
-    )
-    compliance_evidence_ref: Optional[str] = Field(
-        default=None,
-        description="Reference to compliance evidence pack"
-    )
+    privacy_receipt_hash: Optional[str] = Field(default=None, description="Hash of privacy computation receipt")
+    compliance_evidence_ref: Optional[str] = Field(default=None, description="Reference to compliance evidence pack")
 
     def has_encrypted_lora(self) -> bool:
         """Check if package contains encrypted LoRA adapters."""
@@ -126,30 +101,31 @@ class PackageManifest(BaseModel):
     model_name: str = "unknown"
     model_version: str = "0.0.1"
     author_id: str = "anonymous"
-    producer_pubkey_ed25519: Optional[str] = None # Base64 encoded
+    producer_pubkey_ed25519: Optional[str] = None  # Base64 encoded
     created_at: float = Field(default_factory=time.time)
-    
-    payload_hash: str = "pending" # SHA-256 of encrypted payload (or compressed if v0.1)
-    
-    content_index: List[Dict[str, str]] = [] # [{path, sha256}]
-    
+
+    payload_hash: str = "pending"  # SHA-256 of encrypted payload (or compressed if v0.1)
+
+    content_index: List[Dict[str, str]] = []  # [{path, sha256}]
+
     policy_constraints: Dict[str, Any] = {}
     build_info: Dict[str, str] = {}
-    compat_base_model_id: List[str] = [] # For backward compatibility
-    
+    compat_base_model_id: List[str] = []  # For backward compatibility
+
     # Privacy claims for N2HE integration
     privacy: PrivacyClaims = Field(default_factory=PrivacyClaims, description="Privacy claims (N2HE)")
-    
+
     def canonical_bytes(self) -> bytes:
         return canonical_bytes(self.model_dump())
-        
+
     def to_canonical_cbor(self) -> bytes:
         return self.canonical_bytes()
-        
+
     def get_hash(self) -> str:
         import hashlib
+
         return hashlib.sha256(self.canonical_bytes()).hexdigest()
-    
+
     def is_privacy_enabled(self) -> bool:
         """Check if privacy mode is enabled."""
         return self.privacy.mode == "n2he"

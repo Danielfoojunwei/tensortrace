@@ -31,6 +31,7 @@ import struct
 from ctypes import (
     POINTER,
     Structure,
+    byref,
     c_char_p,
     c_double,
     c_int,
@@ -39,7 +40,6 @@ from ctypes import (
     c_size_t,
     c_uint64,
     c_void_p,
-    byref,
 )
 from pathlib import Path
 from typing import Optional, Tuple
@@ -144,9 +144,7 @@ def _find_library() -> Optional[str]:
     try:
         import subprocess
 
-        result = subprocess.run(
-            ["ldconfig", "-p"], capture_output=True, text=True
-        )
+        result = subprocess.run(["ldconfig", "-p"], capture_output=True, text=True)
         for line in result.stdout.split("\n"):
             if "n2he" in line.lower():
                 parts = line.split("=>")
@@ -177,9 +175,7 @@ def _load_library() -> ctypes.CDLL:
         logger.info(f"Loaded N2HE library from {lib_path}")
         return lib
     except OSError as e:
-        raise N2HELibraryNotFoundError(
-            f"Failed to load N2HE library from {lib_path}: {e}"
-        )
+        raise N2HELibraryNotFoundError(f"Failed to load N2HE library from {lib_path}: {e}")
 
 
 class NativeN2HEScheme(N2HEScheme):
@@ -205,10 +201,7 @@ class NativeN2HEScheme(N2HEScheme):
         self._setup_function_signatures()
         self._ctx = self._create_context()
 
-        logger.info(
-            f"Initialized NativeN2HEScheme: n={self.params.n}, "
-            f"security_level={self.params.security_level}"
-        )
+        logger.info(f"Initialized NativeN2HEScheme: n={self.params.n}, security_level={self.params.security_level}")
 
     def _setup_function_signatures(self) -> None:
         """Configure ctypes function signatures for N2HE library."""
@@ -410,17 +403,13 @@ class NativeN2HEScheme(N2HEScheme):
         # Convert to our ciphertext type
         return self._ct_ptr_to_lwe(ct_ptr, noise_budget)
 
-    def _ct_ptr_to_lwe(
-        self, ct_ptr: c_void_p, noise_budget: float
-    ) -> LWECiphertext:
+    def _ct_ptr_to_lwe(self, ct_ptr: c_void_p, noise_budget: float) -> LWECiphertext:
         """Convert C ciphertext pointer to LWECiphertext."""
         # Serialize and parse
         data_ptr = c_char_p()
         data_len = c_size_t()
 
-        self._lib.n2he_serialize_ciphertext(
-            ct_ptr, byref(data_ptr), byref(data_len)
-        )
+        self._lib.n2he_serialize_ciphertext(ct_ptr, byref(data_ptr), byref(data_len))
 
         data = ctypes.string_at(data_ptr, data_len.value)
 
@@ -450,9 +439,7 @@ class NativeN2HEScheme(N2HEScheme):
         )
 
         ct_ptr = c_void_p()
-        result = self._lib.n2he_deserialize_ciphertext(
-            self._ctx, data, len(data), byref(ct_ptr)
-        )
+        result = self._lib.n2he_deserialize_ciphertext(self._ctx, data, len(data), byref(ct_ptr))
 
         if result != 0:
             raise N2HEError("Failed to deserialize ciphertext")
@@ -481,17 +468,13 @@ class NativeN2HEScheme(N2HEScheme):
 
         return np.array(pt_buffer[:result], dtype=np.int64)
 
-    def add(
-        self, ct1: LWECiphertext, ct2: LWECiphertext
-    ) -> LWECiphertext:
+    def add(self, ct1: LWECiphertext, ct2: LWECiphertext) -> LWECiphertext:
         """Homomorphic addition of two ciphertexts."""
         ct1_ptr = self._lwe_to_ct_ptr(ct1)
         ct2_ptr = self._lwe_to_ct_ptr(ct2)
 
         result_ptr = c_void_p()
-        result = self._lib.n2he_add(
-            self._ctx, ct1_ptr, ct2_ptr, byref(result_ptr)
-        )
+        result = self._lib.n2he_add(self._ctx, ct1_ptr, ct2_ptr, byref(result_ptr))
 
         if result != 0:
             raise N2HEError(f"Addition failed with code {result}")
@@ -499,9 +482,7 @@ class NativeN2HEScheme(N2HEScheme):
         noise_budget = self._lib.n2he_get_noise_budget(self._ctx, result_ptr)
         return self._ct_ptr_to_lwe(result_ptr, noise_budget)
 
-    def multiply(
-        self, ct: LWECiphertext, plaintext: np.ndarray
-    ) -> LWECiphertext:
+    def multiply(self, ct: LWECiphertext, plaintext: np.ndarray) -> LWECiphertext:
         """Multiply ciphertext by plaintext."""
         ct_ptr = self._lwe_to_ct_ptr(ct)
 
@@ -509,9 +490,7 @@ class NativeN2HEScheme(N2HEScheme):
         pt_ptr = pt_data.ctypes.data_as(POINTER(c_int64))
 
         result_ptr = c_void_p()
-        result = self._lib.n2he_multiply_plain(
-            self._ctx, ct_ptr, pt_ptr, len(pt_data), byref(result_ptr)
-        )
+        result = self._lib.n2he_multiply_plain(self._ctx, ct_ptr, pt_ptr, len(pt_data), byref(result_ptr))
 
         if result != 0:
             raise N2HEError(f"Multiplication failed with code {result}")

@@ -66,9 +66,7 @@ class AdapterEncryptionConfig:
     rank: int = 16
     alpha: float = 32.0
     dropout: float = 0.0  # No dropout in encrypted mode
-    target_modules: List[str] = field(
-        default_factory=lambda: ["q_proj", "v_proj", "k_proj", "o_proj"]
-    )
+    target_modules: List[str] = field(default_factory=lambda: ["q_proj", "v_proj", "k_proj", "o_proj"])
 
     # HE parameters
     he_params: Optional[HESchemeParams] = None
@@ -112,9 +110,7 @@ class AdapterEncryptionConfig:
             rank=data.get("rank", 16),
             alpha=data.get("alpha", 32.0),
             dropout=data.get("dropout", 0.0),
-            target_modules=data.get(
-                "target_modules", ["q_proj", "v_proj", "k_proj", "o_proj"]
-            ),
+            target_modules=data.get("target_modules", ["q_proj", "v_proj", "k_proj", "o_proj"]),
             he_params=he_params,
             key_bundle_id=data.get("key_bundle_id"),
             batch_size=data.get("batch_size", 1),
@@ -155,12 +151,7 @@ class EncryptedLoRAAdapter:
 
     def _compute_hash(self) -> str:
         """Compute content hash for integrity."""
-        data = (
-            self.adapter_id.encode()
-            + self.module_name.encode()
-            + self.lora_a.tobytes()
-            + self.lora_b.tobytes()
-        )
+        data = self.adapter_id.encode() + self.module_name.encode() + self.lora_a.tobytes() + self.lora_b.tobytes()
         return f"sha256:{hashlib.sha256(data).hexdigest()}"
 
     @property
@@ -296,9 +287,7 @@ class EncryptedLoRARuntime:
 
     def _load_context(self, bundle_id: str) -> None:
         """Load N2HE context for a key bundle."""
-        self._context = self.key_manager.get_context(
-            bundle_id, include_secret_key=False
-        )
+        self._context = self.key_manager.get_context(bundle_id, include_secret_key=False)
         if self._context is None:
             raise ValueError(f"Key bundle not found: {bundle_id}")
         logger.info(f"Loaded N2HE context for bundle {bundle_id}")
@@ -505,9 +494,7 @@ class EncryptedLoRARuntime:
             "operations_count": self._operations_count,
             "total_compute_time_ms": self._total_compute_time_ms,
             "avg_compute_time_ms": (
-                self._total_compute_time_ms / self._operations_count
-                if self._operations_count > 0
-                else 0.0
+                self._total_compute_time_ms / self._operations_count if self._operations_count > 0 else 0.0
             ),
             "errors_count": self._errors_count,
             "adapters_registered": len(self._adapters),
@@ -547,6 +534,42 @@ class EncryptedLoRARuntime:
 
         return record
 
+    def get_manifest_claims(self) -> Dict[str, Any]:
+        """
+        Get manifest claims for TenSafe integration.
+
+        Returns claims about the HE configuration that can be included
+        in TGSP manifests for auditing and verification.
+
+        Returns:
+            Dictionary of manifest claims
+        """
+        claims = {
+            "he_scheme": "n2he",
+            "he_scheme_config": {
+                "mode": self.config.mode.value,
+                "rank": self.config.rank,
+                "alpha": self.config.alpha,
+                "target_modules": self.config.target_modules,
+                "batch_size": self.config.batch_size,
+                "max_seq_len": self.config.max_seq_len,
+            },
+            "adapters_registered": len(self._adapters),
+            "adapter_ids": list(self._adapters.keys()),
+        }
+
+        if self.config.he_params:
+            claims["he_params"] = {
+                "scheme_type": self.config.he_params.scheme_type.value,
+                "security_level": self.config.he_params.security_level,
+                "lattice_dimension": self.config.he_params.n,
+            }
+
+        if self.config.key_bundle_id:
+            claims["key_bundle_id"] = self.config.key_bundle_id
+
+        return claims
+
 
 def create_encrypted_runtime(
     rank: int = 16,
@@ -581,8 +604,7 @@ def create_encrypted_runtime(
         mode=AdapterMode.ENCRYPTED,
         rank=rank,
         alpha=alpha,
-        target_modules=target_modules
-        or ["q_proj", "v_proj", "k_proj", "o_proj"],
+        target_modules=target_modules or ["q_proj", "v_proj", "k_proj", "o_proj"],
         he_params=bundle.params,
         key_bundle_id=bundle.bundle_id,
     )
@@ -591,8 +613,7 @@ def create_encrypted_runtime(
     runtime = EncryptedLoRARuntime(config=config, key_manager=key_manager)
 
     logger.info(
-        f"Created encrypted LoRA runtime for tenant {tenant_id}: "
-        f"bundle={bundle.bundle_id}, rank={rank}, alpha={alpha}"
+        f"Created encrypted LoRA runtime for tenant {tenant_id}: bundle={bundle.bundle_id}, rank={rank}, alpha={alpha}"
     )
 
     return runtime, bundle

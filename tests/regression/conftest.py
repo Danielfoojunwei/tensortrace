@@ -5,17 +5,18 @@ Provides fixtures for regression testing TenSafe privacy invariants.
 Minimal setup for privacy component testing without full platform dependencies.
 """
 
-import pytest
+import logging
 import os
 import sys
-import logging
 import tempfile
 from pathlib import Path
 from typing import Generator
 from unittest.mock import MagicMock
 
+import pytest
 
 # --- Async Mock Helpers ---
+
 
 class AsyncIteratorMock:
     """Helper class to create async iterators for mocking async generators."""
@@ -76,6 +77,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
 # --- Fixtures ---
 
+
 @pytest.fixture(name="temp_dir")
 def temp_dir_fixture() -> Generator[Path, None, None]:
     """Provides a temporary directory for test artifacts."""
@@ -90,6 +92,7 @@ def mock_workflow_fixture():
 
 
 # --- Test Data Fixtures ---
+
 
 @pytest.fixture(scope="session", autouse=True)
 def create_test_fixtures():

@@ -4,18 +4,19 @@ TG-Tinker Platform Server.
 Privacy-first ML training API server built on FastAPI.
 """
 
+import logging
+import os
+from contextlib import asynccontextmanager
+from datetime import datetime
+
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from sqlmodel import SQLModel
 from starlette.middleware.base import BaseHTTPMiddleware
-from contextlib import asynccontextmanager
-import os
-import logging
-from datetime import datetime
 
 from .database import check_db_health, engine
 from .tg_tinker_api import router as tinker_router
-from sqlmodel import SQLModel
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +102,7 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat(),
         "version": "3.0.0",
         "environment": TG_ENVIRONMENT,
-        "checks": {"database": db_health}
+        "checks": {"database": db_health},
     }
 
 
@@ -111,9 +112,7 @@ async def readiness_check():
     db_health = check_db_health()
     if db_health["status"] != "healthy":
         return Response(
-            content='{"ready": false, "reason": "database unavailable"}',
-            status_code=503,
-            media_type="application/json"
+            content='{"ready": false, "reason": "database unavailable"}', status_code=503, media_type="application/json"
         )
     return {"ready": True}
 
@@ -122,6 +121,18 @@ async def readiness_check():
 async def liveness_check():
     """Kubernetes liveness probe."""
     return {"alive": True}
+
+
+@app.get("/version", tags=["health"])
+async def version_info():
+    """Version information endpoint."""
+    return {
+        "service": "TG-Tinker",
+        "version": "3.0.0",
+        "api_version": "v1",
+        "python_version": "3.9+",
+        "environment": TG_ENVIRONMENT,
+    }
 
 
 # TG-Tinker API routes
@@ -138,11 +149,12 @@ async def root():
         "description": "Privacy-First ML Training API",
         "docs": "/docs",
         "health": "/health",
-        "api": "/api/v1/training_clients"
+        "api": "/api/v1/training_clients",
     }
 
 
 if __name__ == "__main__":
     import uvicorn
+
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)

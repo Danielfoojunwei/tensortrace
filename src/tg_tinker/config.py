@@ -4,7 +4,6 @@ TenSafe SDK configuration.
 This module handles environment variables and SDK configuration.
 """
 
-import os
 from typing import Optional
 
 from pydantic import Field
@@ -115,8 +114,7 @@ def validate_api_key(api_key: Optional[str]) -> str:
     """
     if not api_key:
         raise ValueError(
-            "API key is required. Set TS_API_KEY environment variable "
-            "or pass api_key parameter to ServiceClient."
+            "API key is required. Set TS_API_KEY environment variable or pass api_key parameter to ServiceClient."
         )
     if not api_key.startswith("ts-"):
         # Warning only, don't fail for flexibility

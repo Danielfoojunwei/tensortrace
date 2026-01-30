@@ -19,7 +19,7 @@ def get_sha256(data: Union[bytes, str]) -> str:
         Hexadecimal hash string
     """
     if isinstance(data, str):
-        data = data.encode('utf-8')
+        data = data.encode("utf-8")
     return hashlib.sha256(data).hexdigest()
 
 

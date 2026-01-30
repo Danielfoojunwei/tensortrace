@@ -4,18 +4,16 @@ TG-Tinker job queue.
 Provides an in-memory queue (with pluggable backends) for async job execution.
 """
 
-import asyncio
 import hashlib
 import json
 import logging
 import threading
-import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from queue import Empty, PriorityQueue
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -151,13 +149,9 @@ class InMemoryJobQueue(JobQueueBackend):
         """Get count of pending jobs."""
         with self._lock:
             if tenant_id is None:
-                return sum(
-                    1 for job in self._jobs.values() if job.status == JobStatus.PENDING
-                )
+                return sum(1 for job in self._jobs.values() if job.status == JobStatus.PENDING)
             return sum(
-                1
-                for job in self._jobs.values()
-                if job.status == JobStatus.PENDING and job.tenant_id == tenant_id
+                1 for job in self._jobs.values() if job.status == JobStatus.PENDING and job.tenant_id == tenant_id
             )
 
 
@@ -212,9 +206,7 @@ class JobQueue:
         # Check pending count
         pending = self.backend.get_pending_count(tenant_id)
         if pending >= self.max_pending_per_tenant:
-            raise RuntimeError(
-                f"Tenant {tenant_id} has too many pending jobs ({pending})"
-            )
+            raise RuntimeError(f"Tenant {tenant_id} has too many pending jobs ({pending})")
 
         # Compute payload hash (for audit logging, privacy-preserving)
         payload_json = json.dumps(payload, sort_keys=True, default=str)

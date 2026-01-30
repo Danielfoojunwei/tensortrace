@@ -24,14 +24,12 @@ _oqs = None
 
 try:
     import oqs
+
     _oqs = oqs
     _LIBOQS_AVAILABLE = True
     logger.info("liboqs loaded successfully - using production PQC signatures")
 except ImportError:
-    logger.error(
-        "liboqs not available. Install with: pip install liboqs-python "
-        "(requires liboqs native library)."
-    )
+    logger.error("liboqs not available. Install with: pip install liboqs-python (requires liboqs native library).")
 
 
 class Dilithium3(PostQuantumSig):
@@ -61,9 +59,7 @@ class Dilithium3(PostQuantumSig):
     def __init__(self):
         """Initialize Dilithium-3 signature scheme."""
         if not _LIBOQS_AVAILABLE:
-            raise ImportError(
-                "Dilithium3 requires liboqs. Install liboqs-python with the liboqs native library."
-            )
+            raise ImportError("Dilithium3 requires liboqs. Install liboqs-python with the liboqs native library.")
         self._sig = _oqs.Signature("ML-DSA-65")
         logger.debug("Dilithium3 initialized with liboqs ML-DSA-65")
 

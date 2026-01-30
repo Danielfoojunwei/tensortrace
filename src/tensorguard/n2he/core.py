@@ -3,7 +3,20 @@ N2HE Core Module.
 
 Provides the foundational homomorphic encryption primitives for TenSafe.
 This module interfaces with the N2HE C++ library (when available) or
-provides a pure-Python simulation layer for development and testing.
+provides a pure-Python TOY simulation layer for development and testing.
+
+IMPORTANT: The default ToyN2HEScheme is NOT CRYPTOGRAPHICALLY SECURE.
+It is intended only for:
+- Development and testing
+- API compatibility verification
+- Performance benchmarking (overhead estimation)
+
+For production use, you must:
+1. Install the N2HE C++ library
+2. Use NativeN2HEScheme from tensorguard.n2he._native
+
+To explicitly enable toy mode for development, set:
+    TENSAFE_TOY_HE=1
 
 The N2HE scheme is based on LWE/RLWE encryption with optimized kernels
 for neural network linear algebra operations (weighted sums, convolutions).
@@ -17,6 +30,7 @@ References:
 import hashlib
 import json
 import logging
+import os
 import secrets
 import struct
 from abc import ABC, abstractmethod
@@ -27,6 +41,20 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+# Environment variable to explicitly enable toy/simulation mode
+_TOY_HE_ENABLED = os.environ.get("TENSAFE_TOY_HE", "0").lower() in ("1", "true", "yes")
+
+
+class ToyModeNotEnabledError(Exception):
+    """Raised when toy HE mode is used without explicit opt-in."""
+
+    def __init__(self):
+        super().__init__(
+            "ToyN2HEScheme is not cryptographically secure and requires explicit opt-in. "
+            "To enable toy mode for development/testing, set TENSAFE_TOY_HE=1 environment variable. "
+            "For production, install the N2HE native library."
+        )
 
 
 class HESchemeType(Enum):
@@ -166,9 +194,7 @@ class LWECiphertext:
     def __post_init__(self):
         if self.noise_budget is None:
             # Estimate initial noise budget based on parameters
-            self.noise_budget = float(
-                np.log2(self.params.q) - np.log2(self.params.t) - 10
-            )
+            self.noise_budget = float(np.log2(self.params.q) - np.log2(self.params.t) - 10)
 
     def to_bytes(self) -> bytes:
         """Serialize to bytes."""
@@ -191,7 +217,7 @@ class LWECiphertext:
         header = struct.unpack(">BBIQ", data[:header_size])
         _, level, n, b = header
 
-        a = np.frombuffer(data[header_size:header_size + n * 4], dtype=np.int32)
+        a = np.frombuffer(data[header_size : header_size + n * 4], dtype=np.int32)
         return cls(a=a, b=b, params=params, level=level)
 
 
@@ -217,9 +243,7 @@ class RLWECiphertext:
 
     def __post_init__(self):
         if self.noise_budget is None:
-            self.noise_budget = float(
-                np.log2(self.params.q) - np.log2(self.params.t) - 10
-            )
+            self.noise_budget = float(np.log2(self.params.q) - np.log2(self.params.t) - 10)
 
     def to_bytes(self) -> bytes:
         """Serialize to bytes."""
@@ -241,11 +265,11 @@ class RLWECiphertext:
         level, _, n = struct.unpack(">BBI", data[:header_size])
 
         scale_size = struct.calcsize(">d")
-        scale = struct.unpack(">d", data[header_size:header_size + scale_size])[0]
+        scale = struct.unpack(">d", data[header_size : header_size + scale_size])[0]
 
         offset = header_size + scale_size
-        c0 = np.frombuffer(data[offset:offset + n * 8], dtype=np.int64)
-        c1 = np.frombuffer(data[offset + n * 8:offset + 2 * n * 8], dtype=np.int64)
+        c0 = np.frombuffer(data[offset : offset + n * 8], dtype=np.int64)
+        c1 = np.frombuffer(data[offset + n * 8 : offset + 2 * n * 8], dtype=np.int64)
 
         return cls(c0=c0, c1=c1, params=params, level=level, scale=scale)
 
@@ -305,16 +329,12 @@ class N2HEScheme(ABC):
         pass
 
     @abstractmethod
-    def multiply(
-        self, ct: Ciphertext, plaintext: np.ndarray
-    ) -> Ciphertext:
+    def multiply(self, ct: Ciphertext, plaintext: np.ndarray) -> Ciphertext:
         """Multiply ciphertext by plaintext (scalar/vector)."""
         pass
 
     @abstractmethod
-    def matmul(
-        self, ct: Ciphertext, weight_matrix: np.ndarray, ek: bytes
-    ) -> Ciphertext:
+    def matmul(self, ct: Ciphertext, weight_matrix: np.ndarray, ek: bytes) -> Ciphertext:
         """
         Encrypted matrix multiplication: ct @ W^T.
 
@@ -331,24 +351,41 @@ class N2HEScheme(ABC):
         pass
 
 
-class SimulatedN2HEScheme(N2HEScheme):
+class ToyN2HEScheme(N2HEScheme):
     """
-    Simulated N2HE scheme for development and testing.
+    TOY N2HE scheme for development and testing ONLY.
 
-    This provides a functionally correct but not cryptographically
-    secure implementation for integration testing without the
-    N2HE C++ library dependency.
+    WARNING: THIS IS NOT CRYPTOGRAPHICALLY SECURE!
 
-    WARNING: Do not use in production - this is for testing only!
+    This provides a functionally correct but insecure implementation
+    for integration testing without the N2HE C++ library dependency.
+    It simulates the API but does not provide real encryption.
+
+    DO NOT USE IN PRODUCTION - this is for development/testing only!
+
+    To use this scheme, you must explicitly opt-in by setting:
+        TENSAFE_TOY_HE=1
+
+    For production, install the N2HE native library and use NativeN2HEScheme.
     """
 
-    def __init__(self, params: Optional[HESchemeParams] = None):
-        """Initialize with scheme parameters."""
+    def __init__(self, params: Optional[HESchemeParams] = None, _force_enable: bool = False):
+        """
+        Initialize with scheme parameters.
+
+        Args:
+            params: HE scheme parameters
+            _force_enable: Internal flag to bypass env check (for tests only)
+        """
+        if not _force_enable and not _TOY_HE_ENABLED:
+            raise ToyModeNotEnabledError()
+
         self.params = params or HESchemeParams.default_lora_params()
         self._noise_growth_factor = 1.5  # Simulated noise growth
         logger.warning(
-            "Using SimulatedN2HEScheme - NOT for production use! "
-            "Install N2HE C++ library for real encryption."
+            "*** USING ToyN2HEScheme - NOT CRYPTOGRAPHICALLY SECURE! ***\n"
+            "This is a simulation for development/testing only.\n"
+            "For production, install N2HE C++ library."
         )
 
     def keygen(self) -> Tuple[bytes, bytes, bytes]:
@@ -408,9 +445,7 @@ class SimulatedN2HEScheme(N2HEScheme):
             noise_budget=min(ct1.noise_budget or 0, ct2.noise_budget or 0) - 1,
         )
 
-    def multiply(
-        self, ct: LWECiphertext, plaintext: np.ndarray
-    ) -> LWECiphertext:
+    def multiply(self, ct: LWECiphertext, plaintext: np.ndarray) -> LWECiphertext:
         """Multiply ciphertext by plaintext scalar."""
         q = self.params.q
         scalar = int(plaintext.item()) if plaintext.size == 1 else int(plaintext[0])
@@ -422,9 +457,7 @@ class SimulatedN2HEScheme(N2HEScheme):
             noise_budget=(ct.noise_budget or 0) - np.log2(abs(scalar) + 1),
         )
 
-    def matmul(
-        self, ct: LWECiphertext, weight_matrix: np.ndarray, ek: bytes
-    ) -> LWECiphertext:
+    def matmul(self, ct: LWECiphertext, weight_matrix: np.ndarray, ek: bytes) -> LWECiphertext:
         """
         Encrypted matrix multiplication (simulated).
 
@@ -442,7 +475,7 @@ class SimulatedN2HEScheme(N2HEScheme):
         # Transform 'a' vector (simulated key-switching)
         transform_hash = hashlib.sha256(ek + weight_matrix.tobytes()).digest()
         transform = np.frombuffer(transform_hash * (len(ct.a) // 32 + 1), dtype=np.uint8)
-        transform = transform[:len(ct.a)]
+        transform = transform[: len(ct.a)]
 
         new_a = (ct.a.astype(np.int64) + transform.astype(np.int64)) % q
 
@@ -475,7 +508,7 @@ class N2HEContext:
             scheme: HE scheme implementation (default: simulated)
         """
         self.params = params or HESchemeParams.default_lora_params()
-        self.scheme = scheme or SimulatedN2HEScheme(self.params)
+        self.scheme = scheme or ToyN2HEScheme(self.params)
 
         # Key material (set by load_keys or generate_keys)
         self._sk: Optional[bytes] = None
@@ -489,10 +522,7 @@ class N2HEContext:
     def generate_keys(self) -> None:
         """Generate fresh key material."""
         self._sk, self._pk, self._ek = self.scheme.keygen()
-        logger.info(
-            f"Generated N2HE keys: sk={len(self._sk)}B, "
-            f"pk={len(self._pk)}B, ek={len(self._ek)}B"
-        )
+        logger.info(f"Generated N2HE keys: sk={len(self._sk)}B, pk={len(self._pk)}B, ek={len(self._ek)}B")
 
     def load_keys(
         self,
@@ -623,11 +653,8 @@ class N2HEContext:
             self._operations_count += 1
 
         # Track noise growth
-        if hasattr(result, 'noise_budget'):
-            self._total_noise_growth += (
-                (encrypted_activation.noise_budget or 0) -
-                (result.noise_budget or 0)
-            )
+        if hasattr(result, "noise_budget"):
+            self._total_noise_growth += (encrypted_activation.noise_budget or 0) - (result.noise_budget or 0)
 
         return result
 
@@ -645,17 +672,21 @@ class N2HEContext:
 
 def create_context(
     profile: str = "lora",
-    use_simulation: bool = True,
+    use_toy_mode: bool = False,
 ) -> N2HEContext:
     """
     Factory function to create an N2HE context.
 
     Args:
         profile: Parameter profile ("lora", "high_precision", "default")
-        use_simulation: Use simulated scheme (True) or real N2HE (False)
+        use_toy_mode: Use toy/simulated scheme. Requires TENSAFE_TOY_HE=1 env var.
 
     Returns:
         Configured N2HEContext
+
+    Raises:
+        ToyModeNotEnabledError: If toy mode requested without env var
+        ImportError: If native N2HE not available and toy mode not enabled
     """
     if profile == "lora":
         params = HESchemeParams.default_lora_params()
@@ -664,18 +695,24 @@ def create_context(
     else:
         params = HESchemeParams()
 
-    if use_simulation:
-        scheme = SimulatedN2HEScheme(params)
+    if use_toy_mode or _TOY_HE_ENABLED:
+        scheme = ToyN2HEScheme(params)
     else:
         # Try to import real N2HE
         try:
             from tensorguard.n2he._native import NativeN2HEScheme
+
             scheme = NativeN2HEScheme(params)
             logger.info("Using native N2HE scheme")
         except ImportError:
-            logger.warning(
-                "Native N2HE not available, falling back to simulation"
+            raise ImportError(
+                "Native N2HE library not available. Either:\n"
+                "1. Install the N2HE C++ library for production use, or\n"
+                "2. Set TENSAFE_TOY_HE=1 for development/testing"
             )
-            scheme = SimulatedN2HEScheme(params)
 
     return N2HEContext(params=params, scheme=scheme)
+
+
+# Backwards compatibility alias (deprecated)
+SimulatedN2HEScheme = ToyN2HEScheme

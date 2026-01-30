@@ -5,9 +5,7 @@ Provides CLI interface for the TG-Tinker training API.
 """
 
 import json
-import os
 import sys
-from datetime import datetime
 from typing import Optional
 
 import click
@@ -103,7 +101,6 @@ def create_client(
         DPConfig,
         LoRAConfig,
         OptimizerConfig,
-        ServiceClient,
         TrainingConfig,
     )
 
@@ -194,10 +191,7 @@ def list_clients(output_json: bool):
             click.echo(f"{'ID':<40} {'Model':<30} {'Status':<10} {'Step':<6}")
             click.echo("-" * 90)
             for tc in clients:
-                click.echo(
-                    f"{tc.training_client_id:<40} {tc.model_ref[:28]:<30} "
-                    f"{tc.status.value:<10} {tc.step:<6}"
-                )
+                click.echo(f"{tc.training_client_id:<40} {tc.model_ref[:28]:<30} {tc.status.value:<10} {tc.step:<6}")
 
     except Exception as e:
         click.echo(f"Error listing clients: {e}", err=True)

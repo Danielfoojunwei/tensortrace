@@ -25,7 +25,7 @@ import secrets
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
@@ -70,9 +70,7 @@ class PublicKey:
             key_bytes=base64.b64decode(data["key_bytes"]),
             params_hash=data["params_hash"],
             created_at=datetime.fromisoformat(data["created_at"]),
-            expires_at=datetime.fromisoformat(data["expires_at"])
-            if data.get("expires_at")
-            else None,
+            expires_at=datetime.fromisoformat(data["expires_at"]) if data.get("expires_at") else None,
         )
 
     def get_fingerprint(self) -> str:
@@ -122,9 +120,7 @@ class EvaluationKey:
             params_hash=data["params_hash"],
             capabilities=data.get("capabilities", ["matmul", "add", "scale"]),
             created_at=datetime.fromisoformat(data["created_at"]),
-            expires_at=datetime.fromisoformat(data["expires_at"])
-            if data.get("expires_at")
-            else None,
+            expires_at=datetime.fromisoformat(data["expires_at"]) if data.get("expires_at") else None,
         )
 
     def get_fingerprint(self) -> str:
@@ -204,6 +200,14 @@ class HEKeyBundle:
             "capabilities": self.evaluation_key.capabilities,
         }
 
+    def export_public_key(self) -> Dict[str, Any]:
+        """Export public key for client distribution."""
+        return self.public_key.to_dict()
+
+    def export_evaluation_key(self) -> Dict[str, Any]:
+        """Export evaluation key for server distribution."""
+        return self.evaluation_key.to_dict()
+
 
 class HEKeyManager:
     """
@@ -246,9 +250,7 @@ class HEKeyManager:
         if master_key is None:
             # Generate random master key (production should use vault)
             self._master_key = secrets.token_bytes(32)
-            logger.warning(
-                "Generated ephemeral master key - use vault in production"
-            )
+            logger.warning("Generated ephemeral master key - use vault in production")
         else:
             if len(master_key) != 32:
                 raise ValueError("Master key must be 32 bytes")
@@ -287,7 +289,7 @@ class HEKeyManager:
         key_id_base = f"n2he-{tenant_id}-{bundle_id}"
 
         # Create context and generate keys
-        ctx = create_context(profile="lora", use_simulation=True)
+        ctx = create_context(profile="lora", use_toy_mode=True)
         ctx.generate_keys()
 
         params_hash = params.get_hash()
@@ -376,7 +378,7 @@ class HEKeyManager:
         if bundle is None:
             return None
 
-        ctx = create_context(profile="lora", use_simulation=True)
+        ctx = create_context(profile="lora", use_toy_mode=True)
         ctx.load_keys(
             pk=bundle.public_key.key_bytes,
             ek=bundle.evaluation_key.key_bytes,
@@ -425,10 +427,7 @@ class HEKeyManager:
 
         new_bundle = self.generate_key_bundle(tenant_id, params)
 
-        logger.info(
-            f"Rotated keys for tenant {tenant_id}: "
-            f"{old_bundle_id} → {new_bundle.bundle_id}"
-        )
+        logger.info(f"Rotated keys for tenant {tenant_id}: {old_bundle_id} → {new_bundle.bundle_id}")
 
         return new_bundle
 
@@ -466,7 +465,7 @@ class HEKeyManager:
     def _unwrap_key(self, wrapped: bytes) -> bytes:
         """Unwrap (decrypt) a key with the master key."""
         nonce = wrapped[: self.NONCE_SIZE]
-        ciphertext = wrapped[self.NONCE_SIZE:]
+        ciphertext = wrapped[self.NONCE_SIZE :]
         aesgcm = AESGCM(self._master_key)
         return aesgcm.decrypt(nonce, ciphertext, None)
 
@@ -490,20 +489,12 @@ class HEKeyManager:
             "eval_key_id": bundle.evaluation_key.key_id,
             "created_at": bundle.created_at.isoformat(),
         }
-        (base / "bundles" / f"{bundle.bundle_id}.json").write_text(
-            json.dumps(bundle_data, indent=2)
-        )
+        (base / "bundles" / f"{bundle.bundle_id}.json").write_text(json.dumps(bundle_data, indent=2))
 
         # Save keys
-        (base / "secret_keys" / f"{bundle.secret_key.key_id}.enc").write_bytes(
-            bundle.secret_key.key_bytes
-        )
-        (base / "public_keys" / f"{bundle.public_key.key_id}.pub").write_bytes(
-            bundle.public_key.key_bytes
-        )
-        (base / "eval_keys" / f"{bundle.evaluation_key.key_id}.ek").write_bytes(
-            bundle.evaluation_key.key_bytes
-        )
+        (base / "secret_keys" / f"{bundle.secret_key.key_id}.enc").write_bytes(bundle.secret_key.key_bytes)
+        (base / "public_keys" / f"{bundle.public_key.key_id}.pub").write_bytes(bundle.public_key.key_bytes)
+        (base / "eval_keys" / f"{bundle.evaluation_key.key_id}.ek").write_bytes(bundle.evaluation_key.key_bytes)
 
         # Set permissions on secret key
         secret_key_path = base / "secret_keys" / f"{bundle.secret_key.key_id}.enc"
@@ -526,30 +517,15 @@ class HEKeyManager:
                 # Delete all related files
                 bundle_file.unlink()
 
-                sk_file = (
-                    tenant_dir
-                    / "n2he"
-                    / "secret_keys"
-                    / f"{bundle_data['secret_key_id']}.enc"
-                )
+                sk_file = tenant_dir / "n2he" / "secret_keys" / f"{bundle_data['secret_key_id']}.enc"
                 if sk_file.exists():
                     sk_file.unlink()
 
-                pk_file = (
-                    tenant_dir
-                    / "n2he"
-                    / "public_keys"
-                    / f"{bundle_data['public_key_id']}.pub"
-                )
+                pk_file = tenant_dir / "n2he" / "public_keys" / f"{bundle_data['public_key_id']}.pub"
                 if pk_file.exists():
                     pk_file.unlink()
 
-                ek_file = (
-                    tenant_dir
-                    / "n2he"
-                    / "eval_keys"
-                    / f"{bundle_data['eval_key_id']}.ek"
-                )
+                ek_file = tenant_dir / "n2he" / "eval_keys" / f"{bundle_data['eval_key_id']}.ek"
                 if ek_file.exists():
                     ek_file.unlink()
 
@@ -575,25 +551,14 @@ class HEKeyManager:
 
                     # Load key bytes
                     sk_bytes = (
-                        tenant_dir
-                        / "n2he"
-                        / "secret_keys"
-                        / f"{bundle_data['secret_key_id']}.enc"
+                        tenant_dir / "n2he" / "secret_keys" / f"{bundle_data['secret_key_id']}.enc"
                     ).read_bytes()
 
                     pk_bytes = (
-                        tenant_dir
-                        / "n2he"
-                        / "public_keys"
-                        / f"{bundle_data['public_key_id']}.pub"
+                        tenant_dir / "n2he" / "public_keys" / f"{bundle_data['public_key_id']}.pub"
                     ).read_bytes()
 
-                    ek_bytes = (
-                        tenant_dir
-                        / "n2he"
-                        / "eval_keys"
-                        / f"{bundle_data['eval_key_id']}.ek"
-                    ).read_bytes()
+                    ek_bytes = (tenant_dir / "n2he" / "eval_keys" / f"{bundle_data['eval_key_id']}.ek").read_bytes()
 
                     params = HESchemeParams.from_dict(bundle_data["params"])
                     params_hash = params.get_hash()

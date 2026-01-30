@@ -17,7 +17,7 @@ import secrets
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Tuple
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
@@ -215,10 +215,7 @@ class EncryptedArtifactStore:
         # Verify content hash
         computed_hash = f"sha256:{hashlib.sha256(plaintext).hexdigest()}"
         if computed_hash != artifact.content_hash:
-            raise ValueError(
-                f"Content hash mismatch: expected {artifact.content_hash}, "
-                f"got {computed_hash}"
-            )
+            raise ValueError(f"Content hash mismatch: expected {artifact.content_hash}, got {computed_hash}")
 
         return plaintext
 
@@ -233,7 +230,7 @@ class EncryptedArtifactStore:
         training_client_id: str,
     ) -> bytes:
         """Build additional authenticated data for encryption."""
-        return f"{artifact_id}|{tenant_id}|{training_client_id}".encode("utf-8")
+        return f"{artifact_id}|{tenant_id}|{training_client_id}".encode()
 
 
 class KeyManager:
@@ -483,9 +480,7 @@ class SignedArtifactStore(EncryptedArtifactStore):
         with a hybrid Ed25519 + Dilithium3 signature.
         """
         # Call parent to encrypt and save
-        artifact = super().save_artifact(
-            data, tenant_id, training_client_id, artifact_type, metadata
-        )
+        artifact = super().save_artifact(data, tenant_id, training_client_id, artifact_type, metadata)
 
         # Add signature if key is configured
         if self._signing_key is not None:
