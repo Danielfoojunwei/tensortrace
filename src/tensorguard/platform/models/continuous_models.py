@@ -8,6 +8,7 @@ from sqlmodel import Field, SQLModel
 
 class Route(SQLModel, table=True):
     """Model serving route."""
+
     __tablename__ = "routes"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -25,6 +26,7 @@ class Route(SQLModel, table=True):
 
 class Feed(SQLModel, table=True):
     """Data feed for continuous learning."""
+
     __tablename__ = "feeds"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -40,6 +42,7 @@ class Feed(SQLModel, table=True):
 
 class Policy(SQLModel, table=True):
     """Continuous learning policy."""
+
     __tablename__ = "policies"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -55,6 +58,7 @@ class Policy(SQLModel, table=True):
 
 class CandidateEvent(SQLModel, table=True):
     """Candidate model event for A/B testing."""
+
     __tablename__ = "candidate_events"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -69,6 +73,7 @@ class CandidateEvent(SQLModel, table=True):
 
 class AdapterLifecycleState(SQLModel, table=True):
     """Adapter lifecycle state tracking."""
+
     __tablename__ = "adapter_lifecycle_states"
 
     id: Optional[int] = Field(default=None, primary_key=True)

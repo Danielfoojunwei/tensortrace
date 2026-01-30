@@ -385,7 +385,7 @@ class ServiceClient:
             except (httpx.TimeoutException, httpx.ConnectError) as e:
                 last_error = e
                 if attempt < self._config.retry_count:
-                    backoff = self._config.retry_backoff * (2 ** attempt)
+                    backoff = self._config.retry_backoff * (2**attempt)
                     time.sleep(backoff)
                     continue
                 raise
@@ -398,7 +398,9 @@ class ServiceClient:
                 raise
 
         # Should not reach here, but just in case
-        raise last_error
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("Request failed without specific error")
 
     def _check_response(self, response: httpx.Response) -> None:
         """

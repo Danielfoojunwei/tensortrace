@@ -1,4 +1,3 @@
-
 import argparse
 import json
 import logging
@@ -21,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 class TarExtractionError(Exception):
     """Raised when tar extraction fails due to security checks."""
+
     pass
 
 
@@ -55,31 +55,25 @@ def safe_extract_tar(tar: tarfile.TarFile, dest_dir: str, allow_symlinks: bool =
         try:
             resolved_path = member_path.resolve()
         except (OSError, ValueError) as e:
-            raise TarExtractionError(
-                f"Invalid path in tar archive: {member.name} - {e}"
-            )
+            raise TarExtractionError(f"Invalid path in tar archive: {member.name} - {e}")
 
         # Check for path traversal: resolved path must be within dest_dir
         try:
             resolved_path.relative_to(dest_path)
         except ValueError:
             raise TarExtractionError(
-                f"Path traversal detected: '{member.name}' would extract outside "
-                f"destination directory '{dest_dir}'"
+                f"Path traversal detected: '{member.name}' would extract outside destination directory '{dest_dir}'"
             )
 
         # Check for absolute paths in the archive
-        if member.name.startswith('/') or member.name.startswith('\\'):
-            raise TarExtractionError(
-                f"Absolute path in tar archive: {member.name}"
-            )
+        if member.name.startswith("/") or member.name.startswith("\\"):
+            raise TarExtractionError(f"Absolute path in tar archive: {member.name}")
 
         # Check for symlinks and hardlinks
         if member.issym() or member.islnk():
             if not allow_symlinks:
                 raise TarExtractionError(
-                    f"Symlink/hardlink not allowed: {member.name} "
-                    f"(type: {'symlink' if member.issym() else 'hardlink'})"
+                    f"Symlink/hardlink not allowed: {member.name} (type: {'symlink' if member.issym() else 'hardlink'})"
                 )
             # Even if allowed, validate the link target
             if member.issym():
@@ -88,22 +82,21 @@ def safe_extract_tar(tar: tarfile.TarFile, dest_dir: str, allow_symlinks: bool =
                     link_resolved = link_target.resolve()
                     link_resolved.relative_to(dest_path)
                 except ValueError:
-                    raise TarExtractionError(
-                        f"Symlink escapes destination: {member.name} -> {member.linkname}"
-                    )
+                    raise TarExtractionError(f"Symlink escapes destination: {member.name} -> {member.linkname}")
 
         # Check for device files (block/char devices)
         if member.isdev():
-            raise TarExtractionError(
-                f"Device file not allowed: {member.name}"
-            )
+            raise TarExtractionError(f"Device file not allowed: {member.name}")
 
         # Safe to extract
         tar.extract(member, dest_dir, set_attrs=True, numeric_owner=False)
         extracted_files.append(str(resolved_path))
 
     return extracted_files
+
+
 logging.basicConfig(level=logging.INFO)
+
 
 def run_keygen(args):
     out = args.out
@@ -125,6 +118,7 @@ def run_keygen(args):
             json.dump(pub, f)
         print(f"Generated Hybrid-Kyber Encryption Key in {out}")
 
+
 def run_build(args):
     # 1. Manifest
     manifest = PackageManifest(
@@ -133,7 +127,7 @@ def run_build(args):
         model_name=args.model_name,
         model_version=args.model_version,
         author_id="cli-user",
-        payload_hash="pending"
+        payload_hash="pending",
     )
 
     # 2. Recipients
@@ -144,7 +138,7 @@ def run_build(args):
             # format: [optional_label:]path_to_pub_json
             path = r_str
             if ":" in r_str:
-                path = r_str.split(":")[-1] # handle C:\ paths or labels
+                path = r_str.split(":")[-1]  # handle C:\ paths or labels
                 # If the whole thing exists, use it (maybe no label)
                 if not os.path.exists(path) and os.path.exists(r_str):
                     path = r_str
@@ -187,17 +181,20 @@ def run_build(args):
         )
 
     from ..evidence.store import get_store
+
     get_store().add_record("tgsp_build", evt)
 
     os.unlink(tf_path)
     print(f"TGSP v1.0 Built: {args.out}")
     print(json.dumps(evt, indent=2))
 
+
 def run_inspect(args):
     data = read_tgsp_header(args.file)
     print(json.dumps(data["header"], indent=2))
     print(f"Manifest Version: {data['manifest'].get('model_version')}")
     print(f"PQC Mode: {data['header']['crypto'].get('kem')}")
+
 
 def run_open(args):
     data = read_tgsp_header(args.file)
@@ -215,6 +212,7 @@ def run_open(args):
             ss_hybrid = decap_hybrid(sk, rec["encap"])
 
             from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
+
             wrapper = rec["wrapper"]
             nonce = bytes.fromhex(wrapper["nonce"])
             ct = bytes.fromhex(wrapper["ct"])
@@ -244,9 +242,10 @@ def run_open(args):
         with open(out_tar, "wb") as out_f:
             while total_read < data["payload_len"]:
                 chunk = decryptor.decrypt_chunk_from_stream(f)
-                if not chunk: break
+                if not chunk:
+                    break
                 out_f.write(chunk)
-                total_read += (4 + len(chunk) + 16)
+                total_read += 4 + len(chunk) + 16
 
     with tarfile.open(out_tar, "r") as tr:
         try:
@@ -258,17 +257,21 @@ def run_open(args):
     os.remove(out_tar)
     print(f"Payload decrypted and extracted to {args.out_dir}")
 
+
 # --- Compatibility Shims for QA Suite ---
+
 
 def create_tgsp(args):
     """Shim for tests: maps old Args class to run_build."""
     # Ensure manifest has compat fields if provided
-    if not hasattr(args, 'model_name'): args.model_name = "llama-3-8b"
-    if not hasattr(args, 'model_version'): args.model_version = "1.0.0"
-    if not hasattr(args, 'input_dir'):
+    if not hasattr(args, "model_name"):
+        args.model_name = "llama-3-8b"
+    if not hasattr(args, "model_version"):
+        args.model_version = "1.0.0"
+    if not hasattr(args, "input_dir"):
         # Extract from payload if needed
         # args.payload filter: ["adapter1:weights:path"]
-        if hasattr(args, 'payload') and args.payload:
+        if hasattr(args, "payload") and args.payload:
             p0 = args.payload[0]
             if ":" in p0:
                 args.input_dir = os.path.dirname(p0.split(":")[-1])
@@ -277,32 +280,36 @@ def create_tgsp(args):
         else:
             args.input_dir = "."
 
-    if hasattr(args, 'recipient'):
+    if hasattr(args, "recipient"):
         args.recipients = args.recipient
     else:
         args.recipients = []
 
-    if hasattr(args, 'producer_signing_key'):
+    if hasattr(args, "producer_signing_key"):
         args.signing_key = args.producer_signing_key
 
     return run_build(args)
 
+
 def verify_tgsp(args):
     """Shim for tests: maps VerifyArgs to verify_tgsp_container."""
     from .format import verify_tgsp_container
+
     # In compat mode, we might not have a public key passed,
     # so it fails if not self-signed.
     return verify_tgsp_container(args.in_file)
 
+
 def decrypt_tgsp(args):
     """Shim for tests: maps DecryptArgs to run_open."""
-    if hasattr(args, 'recipient_private_key'):
+    if hasattr(args, "recipient_private_key"):
         args.key = args.recipient_private_key
-    if hasattr(args, 'in_file'):
+    if hasattr(args, "in_file"):
         args.file = args.in_file
-    if hasattr(args, 'outdir'):
+    if hasattr(args, "outdir"):
         args.out_dir = args.outdir
     return run_open(args)
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -330,11 +337,17 @@ def main():
     op.add_argument("--out-dir", required=True)
 
     args = parser.parse_args()
-    if args.cmd == "keygen": run_keygen(args)
-    elif args.cmd == "build": run_build(args)
-    elif args.cmd == "inspect": run_inspect(args)
-    elif args.cmd == "open": run_open(args)
-    else: parser.print_help()
+    if args.cmd == "keygen":
+        run_keygen(args)
+    elif args.cmd == "build":
+        run_build(args)
+    elif args.cmd == "inspect":
+        run_inspect(args)
+    elif args.cmd == "open":
+        run_open(args)
+    else:
+        parser.print_help()
+
 
 if __name__ == "__main__":
     main()

@@ -10,11 +10,11 @@ These tests verify that TGSP extraction is safe against:
 
 import os
 import tarfile
-import tempfile
-import pytest
 from pathlib import Path
 
-from tensorguard.tgsp.cli import safe_extract_tar, TarExtractionError
+import pytest
+
+from tensorguard.tgsp.cli import TarExtractionError, safe_extract_tar
 
 
 class TestSafeExtractTar:
@@ -56,7 +56,7 @@ class TestSafeExtractTar:
             # Create a TarInfo with malicious path
             info = tarfile.TarInfo(name="../../../etc/passwd")
             info.size = 5
-            tar.addfile(info, fileobj=__import__('io').BytesIO(b"evil!"))
+            tar.addfile(info, fileobj=__import__("io").BytesIO(b"evil!"))
 
         extract_dir = tmp_path / "extracted"
         extract_dir.mkdir()
@@ -75,7 +75,7 @@ class TestSafeExtractTar:
         with tarfile.open(tar_path, "w") as tar:
             info = tarfile.TarInfo(name="/etc/passwd")
             info.size = 5
-            tar.addfile(info, fileobj=__import__('io').BytesIO(b"evil!"))
+            tar.addfile(info, fileobj=__import__("io").BytesIO(b"evil!"))
 
         extract_dir = tmp_path / "extracted"
         extract_dir.mkdir()
@@ -134,7 +134,7 @@ class TestSafeExtractTar:
             # First add a normal file
             info1 = tarfile.TarInfo(name="original.txt")
             info1.size = 5
-            tar.addfile(info1, fileobj=__import__('io').BytesIO(b"data!"))
+            tar.addfile(info1, fileobj=__import__("io").BytesIO(b"data!"))
 
             # Then add a hardlink
             info2 = tarfile.TarInfo(name="hardlink.txt")
@@ -188,7 +188,7 @@ class TestSafeExtractTar:
             with tarfile.open(tar_path, "w") as tar:
                 info = tarfile.TarInfo(name=malicious_path)
                 info.size = 4
-                tar.addfile(info, fileobj=__import__('io').BytesIO(b"bad!"))
+                tar.addfile(info, fileobj=__import__("io").BytesIO(b"bad!"))
 
             with tarfile.open(tar_path, "r") as tar:
                 # This should either raise TarExtractionError or extract safely within dest

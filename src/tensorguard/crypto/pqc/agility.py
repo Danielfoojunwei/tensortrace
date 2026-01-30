@@ -1,4 +1,3 @@
-
 import abc
 from typing import Tuple
 
@@ -35,6 +34,7 @@ class PostQuantumKEM(abc.ABC):
     def decap(self, sk: bytes, ct: bytes) -> bytes:
         """Returns shared_secret"""
         pass
+
 
 class PostQuantumSig(abc.ABC):
     """Abstract Base Class for Post-Quantum Signatures."""

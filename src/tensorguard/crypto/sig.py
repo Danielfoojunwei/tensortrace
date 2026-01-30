@@ -1,4 +1,3 @@
-
 from typing import Dict, Tuple
 
 from cryptography.hazmat.primitives import serialization
@@ -19,15 +18,18 @@ def generate_hybrid_sig_keypair() -> Tuple[Dict, Dict]:
     pub = {
         "classic": pub_c.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw).hex(),
         "pqc": pk_pqc.hex(),
-        "alg": "Hybrid-Dilithium-v1"
+        "alg": "Hybrid-Dilithium-v1",
     }
 
     priv = {
-        "classic": priv_c.private_bytes(serialization.Encoding.Raw, serialization.PrivateFormat.Raw, serialization.NoEncryption()).hex(),
+        "classic": priv_c.private_bytes(
+            serialization.Encoding.Raw, serialization.PrivateFormat.Raw, serialization.NoEncryption()
+        ).hex(),
         "pqc": sk_pqc.hex(),
-        "alg": "Hybrid-Dilithium-v1"
+        "alg": "Hybrid-Dilithium-v1",
     }
     return pub, priv
+
 
 def sign_hybrid(hybrid_priv: Dict, message: bytes) -> Dict:
     # 1. Classical
@@ -39,10 +41,8 @@ def sign_hybrid(hybrid_priv: Dict, message: bytes) -> Dict:
     sk_pqc = bytes.fromhex(hybrid_priv["pqc"])
     sig_pqc = pqc.sign(sk_pqc, message)
 
-    return {
-        "sig_classic": sig_c.hex(),
-        "sig_pqc": sig_pqc.hex()
-    }
+    return {"sig_classic": sig_c.hex(), "sig_pqc": sig_pqc.hex()}
+
 
 def verify_hybrid(hybrid_pub: Dict, message: bytes, signature: Dict) -> bool:
     try:

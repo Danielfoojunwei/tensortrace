@@ -85,15 +85,9 @@ class OptimizerConfig(BaseModel):
     """Configuration for the optimizer."""
 
     name: str = Field(default="adamw", description="Optimizer name")
-    learning_rate: float = Field(
-        default=1e-4, gt=0, le=1.0, description="Learning rate"
-    )
-    weight_decay: float = Field(
-        default=0.01, ge=0.0, le=1.0, description="Weight decay"
-    )
-    betas: Tuple[float, float] = Field(
-        default=(0.9, 0.999), description="Adam beta parameters"
-    )
+    learning_rate: float = Field(default=1e-4, gt=0, le=1.0, description="Learning rate")
+    weight_decay: float = Field(default=0.01, ge=0.0, le=1.0, description="Weight decay")
+    betas: Tuple[float, float] = Field(default=(0.9, 0.999), description="Adam beta parameters")
     eps: float = Field(default=1e-8, gt=0, description="Epsilon for numerical stability")
 
     @field_validator("name")
@@ -109,21 +103,11 @@ class DPConfig(BaseModel):
     """Configuration for Differential Privacy."""
 
     enabled: bool = Field(default=True, description="Enable DP")
-    noise_multiplier: float = Field(
-        default=1.0, ge=0.0, description="Gaussian noise multiplier"
-    )
-    max_grad_norm: float = Field(
-        default=1.0, gt=0.0, description="Max gradient norm for clipping (per-batch)"
-    )
-    target_epsilon: Optional[float] = Field(
-        default=8.0, ge=0.0, description="Target epsilon budget"
-    )
-    target_delta: Optional[float] = Field(
-        default=1e-5, gt=0.0, lt=1.0, description="Target delta"
-    )
-    accountant_type: DPAccountantType = Field(
-        default=DPAccountantType.RDP, description="Privacy accountant type"
-    )
+    noise_multiplier: float = Field(default=1.0, ge=0.0, description="Gaussian noise multiplier")
+    max_grad_norm: float = Field(default=1.0, gt=0.0, description="Max gradient norm for clipping (per-batch)")
+    target_epsilon: Optional[float] = Field(default=8.0, ge=0.0, description="Target epsilon budget")
+    target_delta: Optional[float] = Field(default=1e-5, gt=0.0, lt=1.0, description="Target delta")
+    accountant_type: DPAccountantType = Field(default=DPAccountantType.RDP, description="Privacy accountant type")
 
 
 class SamplingConfig(BaseModel):
@@ -143,22 +127,12 @@ class TrainingConfig(BaseModel):
     lora_config: Optional[LoRAConfig] = Field(
         default=None, description="LoRA configuration (None for full fine-tuning)"
     )
-    optimizer: OptimizerConfig = Field(
-        default_factory=OptimizerConfig, description="Optimizer configuration"
-    )
-    dp_config: Optional[DPConfig] = Field(
-        default=None, description="Differential privacy configuration"
-    )
+    optimizer: OptimizerConfig = Field(default_factory=OptimizerConfig, description="Optimizer configuration")
+    dp_config: Optional[DPConfig] = Field(default=None, description="Differential privacy configuration")
     batch_size: int = Field(default=8, ge=1, description="Batch size")
-    gradient_accumulation_steps: int = Field(
-        default=1, ge=1, description="Gradient accumulation steps"
-    )
-    max_steps: Optional[int] = Field(
-        default=None, ge=1, description="Maximum training steps"
-    )
-    metadata: Dict[str, Any] = Field(
-        default_factory=dict, description="Custom metadata"
-    )
+    gradient_accumulation_steps: int = Field(default=1, ge=1, description="Gradient accumulation steps")
+    max_steps: Optional[int] = Field(default=None, ge=1, description="Maximum training steps")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Custom metadata")
 
 
 # ==============================================================================
@@ -191,17 +165,13 @@ class ForwardBackwardRequest(BaseModel):
     """Request for forward-backward pass."""
 
     batch: BatchData
-    batch_hash: Optional[str] = Field(
-        None, description="Client-side hash for verification"
-    )
+    batch_hash: Optional[str] = Field(None, description="Client-side hash for verification")
 
 
 class OptimStepRequest(BaseModel):
     """Request for optimizer step."""
 
-    apply_dp_noise: bool = Field(
-        default=True, description="Apply DP noise if enabled"
-    )
+    apply_dp_noise: bool = Field(default=True, description="Apply DP noise if enabled")
 
 
 class SampleRequest(BaseModel):
@@ -350,7 +320,9 @@ class FutureResultResponse(BaseModel):
 
     future_id: str
     status: FutureStatus
-    result: Optional[Union[ForwardBackwardResult, OptimStepResult, SampleResult, SaveStateResult, LoadStateResult]] = None
+    result: Optional[Union[ForwardBackwardResult, OptimStepResult, SampleResult, SaveStateResult, LoadStateResult]] = (
+        None
+    )
     error: Optional[str] = None
 
 

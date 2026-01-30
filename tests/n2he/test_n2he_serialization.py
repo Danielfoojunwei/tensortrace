@@ -17,9 +17,9 @@ from tensorguard.n2he.serialization import (
     CiphertextFormat,
     CiphertextSerializer,
     SerializedCiphertext,
-    serialize_ciphertext,
-    deserialize_ciphertext,
     create_ciphertext_bundle,
+    deserialize_ciphertext,
+    serialize_ciphertext,
 )
 
 
@@ -63,6 +63,7 @@ class TestCiphertextSerializer:
         assert serialized.format == CiphertextFormat.JSON
         # Should be valid JSON
         import json
+
         json.loads(serialized.data.decode("utf-8"))
 
     def test_json_deserialization(self, serializer, lwe_ciphertext):
@@ -80,6 +81,7 @@ class TestCiphertextSerializer:
         assert serialized.format == CiphertextFormat.BASE64
         # Should be valid base64
         import base64
+
         base64.b64decode(serialized.data)
 
     def test_base64_deserialization(self, serializer, lwe_ciphertext):
@@ -94,12 +96,8 @@ class TestCiphertextSerializer:
         serializer_compressed = CiphertextSerializer(compress=True)
         serializer_uncompressed = CiphertextSerializer(compress=False)
 
-        compressed = serializer_compressed.serialize(
-            lwe_ciphertext, CiphertextFormat.BINARY
-        )
-        uncompressed = serializer_uncompressed.serialize(
-            lwe_ciphertext, CiphertextFormat.BINARY
-        )
+        compressed = serializer_compressed.serialize(lwe_ciphertext, CiphertextFormat.BINARY)
+        uncompressed = serializer_uncompressed.serialize(lwe_ciphertext, CiphertextFormat.BINARY)
 
         # Compressed should be smaller (or equal for small data)
         assert len(compressed.data) <= len(uncompressed.data) + 10
@@ -185,10 +183,7 @@ class TestCiphertextBundle:
         """Create test ciphertexts."""
         ctx = create_context()
         ctx.generate_keys()
-        return [
-            ctx.encrypt(np.array([i], dtype=np.int64))
-            for i in range(3)
-        ]
+        return [ctx.encrypt(np.array([i], dtype=np.int64)) for i in range(3)]
 
     def test_bundle_creation(self, ciphertexts):
         """Test bundle creation."""

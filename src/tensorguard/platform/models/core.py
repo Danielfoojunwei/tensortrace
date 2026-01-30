@@ -8,6 +8,7 @@ from sqlmodel import Field, SQLModel
 
 class Tenant(SQLModel, table=True):
     """Tenant (organization) model."""
+
     __tablename__ = "tenants"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -21,6 +22,7 @@ class Tenant(SQLModel, table=True):
 
 class User(SQLModel, table=True):
     """User model."""
+
     __tablename__ = "users"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -35,6 +37,7 @@ class User(SQLModel, table=True):
 
 class Fleet(SQLModel, table=True):
     """Fleet (group of compute nodes) model."""
+
     __tablename__ = "fleets"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -50,6 +53,7 @@ class Fleet(SQLModel, table=True):
 
 class Job(SQLModel, table=True):
     """Training/inference job model."""
+
     __tablename__ = "jobs"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -68,6 +72,7 @@ class Job(SQLModel, table=True):
 
 class AuditLog(SQLModel, table=True):
     """Audit log model for compliance tracking."""
+
     __tablename__ = "audit_logs"
 
     id: Optional[int] = Field(default=None, primary_key=True)

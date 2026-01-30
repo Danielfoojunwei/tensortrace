@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import tempfile
@@ -9,7 +8,15 @@ from .cli import run_build, run_open
 
 class TGSPService:
     @staticmethod
-    def create_package(out_path, signing_key_path=None, payloads=None, policy_path=None, recipients=None, evidence_report=None, base_models=None):
+    def create_package(
+        out_path,
+        signing_key_path=None,
+        payloads=None,
+        policy_path=None,
+        recipients=None,
+        evidence_report=None,
+        base_models=None,
+    ):
         """Legacy shim for TGSPService."""
         with tempfile.TemporaryDirectory() as tmp_in:
             if payloads:
@@ -37,7 +44,7 @@ class TGSPService:
                 model_name="tgsp-service-package",
                 model_version="0.0.1",
                 recipients=recipient_paths,
-                signing_key=signing_key_path
+                signing_key=signing_key_path,
             )
 
             run_build(new_args)
@@ -46,6 +53,7 @@ class TGSPService:
     @staticmethod
     def verify_package(path, public_key=None):
         from .format import verify_tgsp_container
+
         if verify_tgsp_container(path, public_key):
             return True, "OK"
         else:
@@ -53,10 +61,6 @@ class TGSPService:
 
     @staticmethod
     def decrypt_package(path, recipient_id, priv_key_path, out_dir):
-        new_args = Namespace(
-            file=path,
-            key=priv_key_path,
-            out_dir=out_dir
-        )
+        new_args = Namespace(file=path, key=priv_key_path, out_dir=out_dir)
         run_open(new_args)
         return True

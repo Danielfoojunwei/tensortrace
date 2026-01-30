@@ -263,9 +263,7 @@ class N2HEBenchmark:
         # Measure noise consumption
         ct_result = ctx.scheme.add(ct1, ct2)
         if hasattr(ct_result, "noise_budget") and hasattr(ct1, "noise_budget"):
-            result.noise_budget_consumed = (ct1.noise_budget or 0) - (
-                ct_result.noise_budget or 0
-            )
+            result.noise_budget_consumed = (ct1.noise_budget or 0) - (ct_result.noise_budget or 0)
 
         return result
 
@@ -286,9 +284,7 @@ class N2HEBenchmark:
 
         ct_result = ctx.scheme.multiply(ct, scalar)
         if hasattr(ct_result, "noise_budget") and hasattr(ct, "noise_budget"):
-            result.noise_budget_consumed = (ct.noise_budget or 0) - (
-                ct_result.noise_budget or 0
-            )
+            result.noise_budget_consumed = (ct.noise_budget or 0) - (ct_result.noise_budget or 0)
 
         return result
 
@@ -311,9 +307,7 @@ class N2HEBenchmark:
 
         ct_result = ctx.scheme.matmul(ct, weight, ctx._ek)
         if hasattr(ct_result, "noise_budget") and hasattr(ct, "noise_budget"):
-            result.noise_budget_consumed = (ct.noise_budget or 0) - (
-                ct_result.noise_budget or 0
-            )
+            result.noise_budget_consumed = (ct.noise_budget or 0) - (ct_result.noise_budget or 0)
 
         return result
 
@@ -354,9 +348,7 @@ class N2HEBenchmark:
         def serialize_op():
             serializer.serialize(ct, format)
 
-        result = self._benchmark_operation(
-            f"serialize_{format.value}", serialize_op, iterations
-        )
+        result = self._benchmark_operation(f"serialize_{format.value}", serialize_op, iterations)
 
         serialized = serializer.serialize(ct, format)
         result.memory_bytes = len(serialized.data)
@@ -378,9 +370,7 @@ class N2HEBenchmark:
         def deserialize_op():
             serializer.deserialize(serialized, ctx.params)
 
-        return self._benchmark_operation(
-            f"deserialize_{format.value}", deserialize_op, iterations
-        )
+        return self._benchmark_operation(f"deserialize_{format.value}", deserialize_op, iterations)
 
     def run_full_suite(
         self,
@@ -488,12 +478,14 @@ def generate_benchmark_report(suite: BenchmarkSuite) -> str:
             f"{result.std_dev_ms:<10.3f} {result.ops_per_second:<12.1f}"
         )
 
-    lines.extend([
-        "-" * 70,
-        f"Total Time: {sum(r.total_time_ms for r in suite.results):.2f}ms",
-        f"Benchmarks Run: {len(suite.results)}",
-        "=" * 70,
-    ])
+    lines.extend(
+        [
+            "-" * 70,
+            f"Total Time: {sum(r.total_time_ms for r in suite.results):.2f}ms",
+            f"Benchmarks Run: {len(suite.results)}",
+            "=" * 70,
+        ]
+    )
 
     return "\n".join(lines)
 

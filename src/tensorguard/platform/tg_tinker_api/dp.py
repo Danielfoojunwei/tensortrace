@@ -223,10 +223,7 @@ class MomentsAccountant(PrivacyAccountant):
         WARNING: This is not a real moments accountant implementation.
         Use opacus.privacy_analysis for production.
         """
-        logger.warning(
-            "MomentsAccountant is a placeholder. "
-            "Use a production privacy library for real guarantees."
-        )
+        logger.warning("MomentsAccountant is a placeholder. Use a production privacy library for real guarantees.")
 
         # Fallback to simple composition
         if noise_multiplier > 0:
@@ -252,10 +249,7 @@ class PRVAccountant(PrivacyAccountant):
     def __init__(self, target_delta: float = 1e-5):
         self.target_delta = target_delta
         self._total_epsilon = 0.0
-        logger.warning(
-            "PRVAccountant is a placeholder stub. "
-            "Consider using Google's dp-accounting library."
-        )
+        logger.warning("PRVAccountant is a placeholder stub. Consider using Google's dp-accounting library.")
 
     def step(
         self,

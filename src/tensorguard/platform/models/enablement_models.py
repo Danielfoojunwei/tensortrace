@@ -8,6 +8,7 @@ from sqlmodel import Field, SQLModel
 
 class OnboardingProgress(SQLModel, table=True):
     """Track tenant onboarding progress."""
+
     __tablename__ = "onboarding_progress"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -21,6 +22,7 @@ class OnboardingProgress(SQLModel, table=True):
 
 class FeatureFlag(SQLModel, table=True):
     """Feature flags for gradual rollout."""
+
     __tablename__ = "feature_flags"
 
     id: Optional[int] = Field(default=None, primary_key=True)

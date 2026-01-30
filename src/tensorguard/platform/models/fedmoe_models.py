@@ -8,6 +8,7 @@ from sqlmodel import Field, SQLModel
 
 class FedMoEExpert(SQLModel, table=True):
     """Federated MoE expert model."""
+
     __tablename__ = "fedmoe_experts"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -26,6 +27,7 @@ class FedMoEExpert(SQLModel, table=True):
 
 class SkillEvidence(SQLModel, table=True):
     """Evidence of expert skill/capability."""
+
     __tablename__ = "skill_evidence"
 
     id: Optional[int] = Field(default=None, primary_key=True)

@@ -8,6 +8,7 @@ from sqlmodel import Field, SQLModel
 
 class VLAModel(SQLModel, table=True):
     """Vision-Language-Action model registration."""
+
     __tablename__ = "vla_models"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -24,6 +25,7 @@ class VLAModel(SQLModel, table=True):
 
 class VLASafetyCheck(SQLModel, table=True):
     """VLA model safety check record."""
+
     __tablename__ = "vla_safety_checks"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -40,6 +42,7 @@ class VLASafetyCheck(SQLModel, table=True):
 
 class VLADeploymentLog(SQLModel, table=True):
     """VLA model deployment log."""
+
     __tablename__ = "vla_deployment_logs"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -56,6 +59,7 @@ class VLADeploymentLog(SQLModel, table=True):
 
 class VLABenchmarkResult(SQLModel, table=True):
     """VLA model benchmark result."""
+
     __tablename__ = "vla_benchmark_results"
 
     id: Optional[int] = Field(default=None, primary_key=True)

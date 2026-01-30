@@ -5,13 +5,15 @@ from typing import IO, Optional
 
 from cryptography.hazmat.primitives.ciphers.aead import ChaCha20Poly1305
 
-CHUNK_SIZE = 4 * 1024 * 1024 # 4MB
+CHUNK_SIZE = 4 * 1024 * 1024  # 4MB
+
 
 def derive_nonce(base_nonce: bytes, chunk_index: int) -> bytes:
     """Derive deterministic nonce for chunk."""
     idx_bytes = struct.pack(">Q", chunk_index)
     hash_input = base_nonce + idx_bytes
     return hashlib.sha256(hash_input).digest()[:12]
+
 
 class PayloadEncryptor:
     def __init__(self, key: bytes, manifest_hash: str, recipients_hash: str):
@@ -33,7 +35,10 @@ class PayloadEncryptor:
         self.chunk_index += 1
         return res
 
-def encrypt_stream(input_stream: IO[bytes], output_stream: IO[bytes], key: bytes, manifest_hash: str, recipients_hash: str) -> str:
+
+def encrypt_stream(
+    input_stream: IO[bytes], output_stream: IO[bytes], key: bytes, manifest_hash: str, recipients_hash: str
+) -> str:
     """
     Encrypt input_stream to output_stream.
     Returns: nonce_base (hex)
@@ -48,6 +53,7 @@ def encrypt_stream(input_stream: IO[bytes], output_stream: IO[bytes], key: bytes
         output_stream.write(encrypted_chunk)
 
     return encryptor.nonce_base.hex()
+
 
 class PayloadDecryptor:
     def __init__(self, key: bytes, nonce_base: bytes, manifest_hash: str, recipients_hash: str):

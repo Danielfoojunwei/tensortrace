@@ -202,12 +202,14 @@ class MockMLBackend:
             completion = f" [Mock completion for step {model['step']}]"
             tokens_generated = min(len(completion.split()), max_tokens)
 
-            samples.append({
-                "prompt": prompt,
-                "completion": completion,
-                "tokens_generated": tokens_generated,
-                "finish_reason": "stop",
-            })
+            samples.append(
+                {
+                    "prompt": prompt,
+                    "completion": completion,
+                    "tokens_generated": tokens_generated,
+                    "finish_reason": "stop",
+                }
+            )
 
         return {
             "samples": samples,

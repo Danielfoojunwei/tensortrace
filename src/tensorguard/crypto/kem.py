@@ -1,4 +1,3 @@
-
 from typing import Dict, Tuple
 
 from cryptography.hazmat.primitives import hashes, serialization
@@ -7,6 +6,7 @@ from cryptography.hazmat.primitives.asymmetric import x25519
 from .pqc.kyber import Kyber768
 
 # Unified KEM Interface
+
 
 def generate_hybrid_keypair() -> Tuple[Dict, Dict]:
     """
@@ -24,16 +24,19 @@ def generate_hybrid_keypair() -> Tuple[Dict, Dict]:
     pub = {
         "classic": pub_c.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw).hex(),
         "pqc": pk_pqc.hex(),
-        "alg": "Hybrid-Kyber-v1"
+        "alg": "Hybrid-Kyber-v1",
     }
 
     priv = {
-        "classic": priv_c.private_bytes(serialization.Encoding.Raw, serialization.PrivateFormat.Raw, serialization.NoEncryption()).hex(),
+        "classic": priv_c.private_bytes(
+            serialization.Encoding.Raw, serialization.PrivateFormat.Raw, serialization.NoEncryption()
+        ).hex(),
         "pqc": sk_pqc.hex(),
-        "alg": "Hybrid-Kyber-v1"
+        "alg": "Hybrid-Kyber-v1",
     }
 
     return pub, priv
+
 
 def encap_hybrid(hybrid_pub: Dict) -> Tuple[bytes, Dict]:
     """
@@ -63,10 +66,11 @@ def encap_hybrid(hybrid_pub: Dict) -> Tuple[bytes, Dict]:
 
     encap_data = {
         "ek_classic": ephem_pub_c.public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw).hex(),
-        "ct_pqc": ct_pqc.hex()
+        "ct_pqc": ct_pqc.hex(),
     }
 
     return ss_hybrid, encap_data
+
 
 def decap_hybrid(hybrid_priv: Dict, encap_data: Dict) -> bytes:
     """

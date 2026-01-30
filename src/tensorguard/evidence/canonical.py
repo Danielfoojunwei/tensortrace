@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Union
 
 try:
     import msgpack
+
     _MSGPACK_AVAILABLE = True
 except ImportError:
     _MSGPACK_AVAILABLE = False

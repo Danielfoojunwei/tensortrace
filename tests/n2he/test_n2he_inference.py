@@ -8,10 +8,10 @@ import numpy as np
 import pytest
 
 from tensorguard.n2he.inference import (
-    PrivateInferenceConfig,
-    PrivateInferenceProfile,
     EncryptedBatch,
     EncryptedOutput,
+    PrivateInferenceConfig,
+    PrivateInferenceProfile,
     create_private_inference_mode,
 )
 

@@ -122,9 +122,7 @@ class EvidenceStore:
             The created EvidenceRecord
         """
         data_hash = hashlib.sha256(canonical_bytes(data)).hexdigest()
-        record_id = hashlib.sha256(
-            f"{record_type}:{data_hash}:{time.time()}".encode()
-        ).hexdigest()[:16]
+        record_id = hashlib.sha256(f"{record_type}:{data_hash}:{time.time()}".encode()).hexdigest()[:16]
 
         record = EvidenceRecord(
             record_id=record_id,

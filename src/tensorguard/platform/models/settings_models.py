@@ -8,6 +8,7 @@ from sqlmodel import Field, SQLModel
 
 class SystemSetting(SQLModel, table=True):
     """System-wide configuration settings."""
+
     __tablename__ = "system_settings"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -21,6 +22,7 @@ class SystemSetting(SQLModel, table=True):
 
 class KMSKey(SQLModel, table=True):
     """KMS key reference."""
+
     __tablename__ = "kms_keys"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -37,6 +39,7 @@ class KMSKey(SQLModel, table=True):
 
 class KMSRotationLog(SQLModel, table=True):
     """KMS key rotation audit log."""
+
     __tablename__ = "kms_rotation_logs"
 
     id: Optional[int] = Field(default=None, primary_key=True)

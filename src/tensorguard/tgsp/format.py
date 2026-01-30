@@ -1,4 +1,3 @@
-
 import hashlib
 import json
 import os
@@ -18,22 +17,21 @@ from .manifest import PackageManifest
 # TGSP v1.0 Constants
 MAGIC_V1 = b"TGSP\x01\x00"  # TGSP v1.0
 
+
 def canonical_json(data: Any) -> bytes:
     """Canonical JSON serialization that DOES NOT strip fields."""
-    return json.dumps(
-        data,
-        sort_keys=True,
-        separators=(',', ':'),
-        ensure_ascii=False
-    ).encode('utf-8')
+    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
 
-def write_tgsp_package_v1(output_path: str,
-                          manifest: PackageManifest,
-                          payload_stream: IO[bytes],
-                          recipients_public_keys: List[Dict], # List of Hybrid Public Keys
-                          signing_key: Dict,  # Hybrid Private Key
-                          signing_public_key: Dict,  # Hybrid Public Key
-                          signing_key_id: str) -> Dict:
+
+def write_tgsp_package_v1(
+    output_path: str,
+    manifest: PackageManifest,
+    payload_stream: IO[bytes],
+    recipients_public_keys: List[Dict],  # List of Hybrid Public Keys
+    signing_key: Dict,  # Hybrid Private Key
+    signing_public_key: Dict,  # Hybrid Public Key
+    signing_key_id: str,
+) -> Dict:
     """
     Write a TGSP v1.0 Container (Hybrid PQC).
     """
@@ -94,11 +92,13 @@ def write_tgsp_package_v1(output_path: str,
         aead = ChaCha20Poly1305(ss_hybrid)
         ct_dek = aead.encrypt(nonce, dek, None)
 
-        recipients_block.append({
-            "recipient_id": "hybrid-id", # Should derive from key?
-            "encap": encap_data,
-            "wrapper": {"nonce": nonce.hex(), "ct": ct_dek.hex()}
-        })
+        recipients_block.append(
+            {
+                "recipient_id": "hybrid-id",  # Should derive from key?
+                "encap": encap_data,
+                "wrapper": {"nonce": nonce.hex(), "ct": ct_dek.hex()},
+            }
+        )
 
     recipients_bytes = canonical_json(recipients_block)
     recipients_hash = hashlib.sha256(recipients_bytes).hexdigest()
@@ -112,24 +112,21 @@ def write_tgsp_package_v1(output_path: str,
     p_hasher = hashlib.sha256()
     while True:
         chunk = payload_temp.read(65536)
-        if not chunk: break
+        if not chunk:
+            break
         p_hasher.update(chunk)
     payload_hash = p_hasher.hexdigest()
 
     # 5. Build Header
     header = {
         "tgsp_version": "1.0",
-        "hashes": {
-            "manifest": manifest_hash,
-            "recipients": recipients_hash,
-            "payload": payload_hash
-        },
+        "hashes": {"manifest": manifest_hash, "recipients": recipients_hash, "payload": payload_hash},
         "crypto": {
             "nonce_base": nonce_base_hex,
             "alg": "CHACHA20_POLY1305",
             "kem": "Hybrid-Kyber-v1",
-            "sig": "Hybrid-Dilithium-v1"
-        }
+            "sig": "Hybrid-Dilithium-v1",
+        },
     }
     header_bytes = canonical_json(header)
 
@@ -137,10 +134,7 @@ def write_tgsp_package_v1(output_path: str,
     signed_area = header_bytes + manifest_bytes + recipients_bytes
     signature = sign_hybrid(signing_key, signed_area)
 
-    sig_block = {
-        "key_id": signing_key_id,
-        "signature": signature
-    }
+    sig_block = {"key_id": signing_key_id, "signature": signature}
     sig_bytes = canonical_json(sig_block)
 
     # 7. Write to Disk
@@ -178,8 +172,9 @@ def write_tgsp_package_v1(output_path: str,
         "manifest_hash": manifest_hash,
         "payload_hash": payload_hash,
         "key_id": signing_key_id,
-        "mode": "Post-Quantum Hybrid"
+        "mode": "Post-Quantum Hybrid",
     }
+
 
 def read_tgsp_header(path: str) -> Dict:
     """
@@ -188,7 +183,7 @@ def read_tgsp_header(path: str) -> Dict:
     with open(path, "rb") as f:
         magic = f.read(6)
         if magic != MAGIC_V1:
-             raise ValueError(f"Invalid Magic: Expected {MAGIC_V1}, got {magic}")
+            raise ValueError(f"Invalid Magic: Expected {MAGIC_V1}, got {magic}")
 
         h_len = struct.unpack(">I", f.read(4))[0]
         h_bytes = f.read(h_len)
@@ -219,13 +214,14 @@ def read_tgsp_header(path: str) -> Dict:
             "signature_block": sig_block,
             "signed_area": signed_area,
             "payload_offset": payload_offset,
-            "payload_len": p_len
+            "payload_len": p_len,
         }
+
 
 def verify_tgsp_container(path: str, public_key: Dict = None) -> bool:
     """
     Verify TGSP v1.0 Container signature.
-    If public_key is not provided, we might attempt to load it from a trusted store 
+    If public_key is not provided, we might attempt to load it from a trusted store
     or the manifest (if self-signed/trust-on-first-use, though less secure).
     For now, we require the public_key for verification.
     """
@@ -241,6 +237,7 @@ def verify_tgsp_container(path: str, public_key: Dict = None) -> bool:
         return verify_hybrid(public_key, data["signed_area"], data["signature_block"]["signature"])
     except Exception:
         return False
+
 
 # Shim for backward compat if needed
 create_tgsp = write_tgsp_package_v1

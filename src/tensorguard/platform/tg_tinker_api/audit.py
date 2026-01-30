@@ -138,8 +138,7 @@ class AuditLogger:
             self._logs.append(entry)
 
             logger.debug(
-                f"Audit log: {operation} on {training_client_id} "
-                f"(seq={self._sequence}, hash={record_hash[:20]}...)"
+                f"Audit log: {operation} on {training_client_id} (seq={self._sequence}, hash={record_hash[:20]}...)"
             )
 
             return entry
@@ -171,9 +170,7 @@ class AuditLogger:
             if tenant_id:
                 filtered = [e for e in filtered if e.tenant_id == tenant_id]
             if training_client_id:
-                filtered = [
-                    e for e in filtered if e.training_client_id == training_client_id
-                ]
+                filtered = [e for e in filtered if e.training_client_id == training_client_id]
             if operation:
                 filtered = [e for e in filtered if e.operation == operation]
 
@@ -211,8 +208,7 @@ class AuditLogger:
                 # Check prev_hash link
                 if entry.prev_hash != prev_hash:
                     logger.error(
-                        f"Chain broken at seq={entry.sequence}: "
-                        f"expected prev_hash={prev_hash}, got {entry.prev_hash}"
+                        f"Chain broken at seq={entry.sequence}: expected prev_hash={prev_hash}, got {entry.prev_hash}"
                     )
                     return False
 
@@ -232,8 +228,7 @@ class AuditLogger:
 
                 if computed_hash != entry.record_hash:
                     logger.error(
-                        f"Hash mismatch at seq={entry.sequence}: "
-                        f"expected {entry.record_hash}, computed {computed_hash}"
+                        f"Hash mismatch at seq={entry.sequence}: expected {entry.record_hash}, computed {computed_hash}"
                     )
                     return False
 

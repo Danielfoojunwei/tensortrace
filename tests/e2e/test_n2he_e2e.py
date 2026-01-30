@@ -35,26 +35,24 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 from tensorguard.n2he import (
-    N2HEContext,
-    HESchemeParams,
-    HEKeyManager,
-    EncryptedLoRARuntime,
-    PrivateInferenceMode,
-    CiphertextSerializer,
     CiphertextFormat,
+    CiphertextSerializer,
+    HEKeyManager,
+    HESchemeParams,
+    N2HEContext,
+    create_ciphertext_bundle,
     create_encrypted_runtime,
     create_private_inference_mode,
-    serialize_ciphertext,
     deserialize_ciphertext,
-    create_ciphertext_bundle,
+    serialize_ciphertext,
 )
-from tensorguard.n2he.core import LWECiphertext, RLWECiphertext
-from tensorguard.n2he.benchmark import N2HEBenchmark, run_quick_benchmark
+from tensorguard.n2he.benchmark import run_quick_benchmark
 
 
 @dataclass
 class N2HEMetrics:
     """Metrics collected during N2HE E2E testing."""
+
     # Key generation metrics
     keygen_lwe_times: List[float] = field(default_factory=list)
     keygen_rlwe_times: List[float] = field(default_factory=list)
@@ -117,7 +115,9 @@ class N2HEMetrics:
                     "p50": self.percentile(self.keygen_lwe_times, 50) * 1000,
                     "p95": self.percentile(self.keygen_lwe_times, 95) * 1000,
                     "mean": statistics.mean(self.keygen_lwe_times) * 1000 if self.keygen_lwe_times else 0,
-                    "throughput": 1000 / (statistics.mean(self.keygen_lwe_times) * 1000) if self.keygen_lwe_times else 0,
+                    "throughput": 1000 / (statistics.mean(self.keygen_lwe_times) * 1000)
+                    if self.keygen_lwe_times
+                    else 0,
                 },
                 "rlwe_keygen_ms": {
                     "p50": self.percentile(self.keygen_rlwe_times, 50) * 1000,
@@ -171,7 +171,9 @@ class N2HEMetrics:
                     "p50": self.percentile(self.lora_delta_times, 50) * 1000,
                     "p95": self.percentile(self.lora_delta_times, 95) * 1000,
                     "mean": statistics.mean(self.lora_delta_times) * 1000 if self.lora_delta_times else 0,
-                    "throughput": 1000 / (statistics.mean(self.lora_delta_times) * 1000) if self.lora_delta_times else 0,
+                    "throughput": 1000 / (statistics.mean(self.lora_delta_times) * 1000)
+                    if self.lora_delta_times
+                    else 0,
                 },
                 "forward_pass_ms": {
                     "p50": self.percentile(self.lora_forward_times, 50) * 1000,
@@ -220,7 +222,9 @@ class N2HEMetrics:
                 "binary_deserialize_ms": {
                     "p50": self.percentile(self.deserialize_binary_times, 50) * 1000,
                     "p95": self.percentile(self.deserialize_binary_times, 95) * 1000,
-                    "mean": statistics.mean(self.deserialize_binary_times) * 1000 if self.deserialize_binary_times else 0,
+                    "mean": statistics.mean(self.deserialize_binary_times) * 1000
+                    if self.deserialize_binary_times
+                    else 0,
                 },
             },
             "size_metrics": {
@@ -383,7 +387,7 @@ class N2HETestHarness:
                 "total_ms": elapsed * 1000,
                 "per_element_ms": (elapsed / batch_size) * 1000,
             }
-            print(f"    Batch {batch_size}: {elapsed*1000:.3f}ms total, {(elapsed/batch_size)*1000:.3f}ms/elem")
+            print(f"    Batch {batch_size}: {elapsed * 1000:.3f}ms total, {(elapsed / batch_size) * 1000:.3f}ms/elem")
 
         return results
 
@@ -449,7 +453,7 @@ class N2HETestHarness:
             self.metrics.operations_completed += 1
 
             results[f"matmul_{size}x{size}"] = {"ms": elapsed * 1000}
-            print(f"    Matmul {size}x{size}: {elapsed*1000:.3f}ms")
+            print(f"    Matmul {size}x{size}: {elapsed * 1000:.3f}ms")
 
         return results
 
@@ -601,7 +605,9 @@ class N2HETestHarness:
             "json_ms": statistics.mean(self.metrics.serialize_json_times) * 1000,
             "base64_ms": statistics.mean(self.metrics.serialize_base64_times) * 1000,
         }
-        print(f"    Binary: {results['binary_ms']:.3f}ms, JSON: {results['json_ms']:.3f}ms, Base64: {results['base64_ms']:.3f}ms")
+        print(
+            f"    Binary: {results['binary_ms']:.3f}ms, JSON: {results['json_ms']:.3f}ms, Base64: {results['base64_ms']:.3f}ms"
+        )
         return results
 
     def test_ciphertext_bundles(self, bundle_sizes: List[int] = None) -> Dict[str, Any]:
@@ -631,7 +637,7 @@ class N2HETestHarness:
                 "creation_ms": elapsed * 1000,
                 "total_size_bytes": total_size,
             }
-            print(f"    Bundle {size}: {elapsed*1000:.3f}ms, {total_size} bytes")
+            print(f"    Bundle {size}: {elapsed * 1000:.3f}ms, {total_size} bytes")
 
         return results
 
@@ -654,10 +660,18 @@ def generate_n2he_report(metrics: N2HEMetrics) -> Dict[str, Any]:
 
     # Calculate key performance indicators
     report["kpi"] = {
-        "keygen_throughput": f"{1000 / (statistics.mean(metrics.keygen_lwe_times) * 1000):.0f} ops/sec" if metrics.keygen_lwe_times else "N/A",
-        "encrypt_throughput": f"{1000 / (statistics.mean(metrics.encrypt_times) * 1000):.0f} ops/sec" if metrics.encrypt_times else "N/A",
-        "lora_delta_throughput": f"{1000 / (statistics.mean(metrics.lora_delta_times) * 1000):.0f} ops/sec" if metrics.lora_delta_times else "N/A",
-        "average_ciphertext_size": f"{statistics.mean(metrics.ciphertext_sizes):.0f} bytes" if metrics.ciphertext_sizes else "N/A",
+        "keygen_throughput": f"{1000 / (statistics.mean(metrics.keygen_lwe_times) * 1000):.0f} ops/sec"
+        if metrics.keygen_lwe_times
+        else "N/A",
+        "encrypt_throughput": f"{1000 / (statistics.mean(metrics.encrypt_times) * 1000):.0f} ops/sec"
+        if metrics.encrypt_times
+        else "N/A",
+        "lora_delta_throughput": f"{1000 / (statistics.mean(metrics.lora_delta_times) * 1000):.0f} ops/sec"
+        if metrics.lora_delta_times
+        else "N/A",
+        "average_ciphertext_size": f"{statistics.mean(metrics.ciphertext_sizes):.0f} bytes"
+        if metrics.ciphertext_sizes
+        else "N/A",
     }
 
     return report
@@ -666,6 +680,7 @@ def generate_n2he_report(metrics: N2HEMetrics) -> Dict[str, Any]:
 # =============================================================================
 # Test Functions
 # =============================================================================
+
 
 @pytest.fixture
 def n2he_harness():

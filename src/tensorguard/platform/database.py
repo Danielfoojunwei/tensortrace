@@ -61,7 +61,7 @@ def create_production_engine(url: str):
             url,
             connect_args={"check_same_thread": False},
             echo=TG_DB_ECHO,
-            poolclass=NullPool  # SQLite doesn't benefit from pooling
+            poolclass=NullPool,  # SQLite doesn't benefit from pooling
         )
 
     # PostgreSQL/MySQL: full connection pooling
@@ -79,7 +79,7 @@ def create_production_engine(url: str):
         pool_pre_ping=True,  # Validate connections before use
         pool_recycle=TG_DB_POOL_RECYCLE,  # Recycle connections after N seconds
         echo=TG_DB_ECHO,
-        echo_pool="debug" if TG_DB_ECHO else False
+        echo_pool="debug" if TG_DB_ECHO else False,
     )
 
     # Connection event listeners for monitoring
@@ -131,14 +131,11 @@ def check_db_health() -> dict:
         pool = engine.pool
         return {
             "status": "healthy",
-            "pool_size": pool.size() if hasattr(pool, 'size') else "N/A",
-            "checked_in": pool.checkedin() if hasattr(pool, 'checkedin') else "N/A",
-            "checked_out": pool.checkedout() if hasattr(pool, 'checkedout') else "N/A",
-            "overflow": pool.overflow() if hasattr(pool, 'overflow') else "N/A",
+            "pool_size": pool.size() if hasattr(pool, "size") else "N/A",
+            "checked_in": pool.checkedin() if hasattr(pool, "checkedin") else "N/A",
+            "checked_out": pool.checkedout() if hasattr(pool, "checkedout") else "N/A",
+            "overflow": pool.overflow() if hasattr(pool, "overflow") else "N/A",
         }
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
-        return {
-            "status": "unhealthy",
-            "error": str(e)
-        }
+        return {"status": "unhealthy", "error": str(e)}

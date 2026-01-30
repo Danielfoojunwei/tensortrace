@@ -11,7 +11,15 @@ from .identity_models import (
 )
 
 __all__ = [
-    "Tenant", "User", "Fleet", "Job", "AuditLog",
-    "IdentityEndpoint", "IdentityCertificate", "IdentityPolicy",
-    "IdentityRenewalJob", "IdentityAuditLog", "IdentityAgent",
+    "Tenant",
+    "User",
+    "Fleet",
+    "Job",
+    "AuditLog",
+    "IdentityEndpoint",
+    "IdentityCertificate",
+    "IdentityPolicy",
+    "IdentityRenewalJob",
+    "IdentityAuditLog",
+    "IdentityAgent",
 ]

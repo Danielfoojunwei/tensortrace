@@ -215,10 +215,7 @@ class EncryptedArtifactStore:
         # Verify content hash
         computed_hash = f"sha256:{hashlib.sha256(plaintext).hexdigest()}"
         if computed_hash != artifact.content_hash:
-            raise ValueError(
-                f"Content hash mismatch: expected {artifact.content_hash}, "
-                f"got {computed_hash}"
-            )
+            raise ValueError(f"Content hash mismatch: expected {artifact.content_hash}, got {computed_hash}")
 
         return plaintext
 
@@ -483,9 +480,7 @@ class SignedArtifactStore(EncryptedArtifactStore):
         with a hybrid Ed25519 + Dilithium3 signature.
         """
         # Call parent to encrypt and save
-        artifact = super().save_artifact(
-            data, tenant_id, training_client_id, artifact_type, metadata
-        )
+        artifact = super().save_artifact(data, tenant_id, training_client_id, artifact_type, metadata)
 
         # Add signature if key is configured
         if self._signing_key is not None:

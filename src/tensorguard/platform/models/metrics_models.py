@@ -8,6 +8,7 @@ from sqlmodel import Field, SQLModel
 
 class RouteMetricSeries(SQLModel, table=True):
     """Time-series metrics for routes."""
+
     __tablename__ = "route_metric_series"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -21,6 +22,7 @@ class RouteMetricSeries(SQLModel, table=True):
 
 class AdapterMetricSnapshot(SQLModel, table=True):
     """Point-in-time adapter metrics."""
+
     __tablename__ = "adapter_metric_snapshots"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -34,6 +36,7 @@ class AdapterMetricSnapshot(SQLModel, table=True):
 
 class RunStepMetrics(SQLModel, table=True):
     """Metrics for training run steps."""
+
     __tablename__ = "run_step_metrics"
 
     id: Optional[int] = Field(default=None, primary_key=True)

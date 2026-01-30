@@ -10,13 +10,11 @@ These tests verify that privacy guarantees are enforced:
 """
 
 import hashlib
-import json
 import os
 import sys
 import tempfile
 from pathlib import Path
 from typing import List
-from unittest.mock import patch
 
 import pytest
 
@@ -79,9 +77,7 @@ class TempDirWatcher:
                     # Check for plaintext patterns
                     for banned in BANNED_SUBSTRINGS:
                         if banned.encode() in content or banned.encode().lower() in content.lower():
-                            violations.append(
-                                f"Banned content '{banned}' found in file: {file_path}"
-                            )
+                            violations.append(f"Banned content '{banned}' found in file: {file_path}")
 
                     # Check for unencrypted tensor patterns (numpy/torch signatures)
                     if b"\x93NUMPY" in content:
@@ -125,7 +121,7 @@ def log_capture():
     yield capture
     violations = capture.check_no_banned_content()
     if violations:
-        pytest.fail(f"Privacy violations in logs:\n" + "\n".join(violations))
+        pytest.fail("Privacy violations in logs:\n" + "\n".join(violations))
 
 
 @pytest.fixture
@@ -136,7 +132,7 @@ def temp_watcher():
         yield watcher
         violations = watcher.check_no_plaintext_files()
         if violations:
-            pytest.fail(f"Privacy violations in temp files:\n" + "\n".join(violations))
+            pytest.fail("Privacy violations in temp files:\n" + "\n".join(violations))
 
 
 class TestPrivacyInvariants:
@@ -146,9 +142,9 @@ class TestPrivacyInvariants:
     def test_encryption_always_applied(self):
         """Verify encryption is always applied to artifacts."""
         from tensorguard.platform.tg_tinker_api.storage import (
-            LocalStorageBackend,
             EncryptedArtifactStore,
             KeyManager,
+            LocalStorageBackend,
         )
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -178,9 +174,9 @@ class TestPrivacyInvariants:
     def test_content_hash_verification(self):
         """Verify content hash is computed and verified."""
         from tensorguard.platform.tg_tinker_api.storage import (
-            LocalStorageBackend,
             EncryptedArtifactStore,
             KeyManager,
+            LocalStorageBackend,
         )
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -208,7 +204,7 @@ class TestPrivacyInvariants:
     @pytest.mark.regression
     def test_audit_chain_integrity(self):
         """Verify audit chain hash linking is correct."""
-        from tensorguard.platform.tg_tinker_api.audit import AuditLogger, GENESIS_HASH
+        from tensorguard.platform.tg_tinker_api.audit import GENESIS_HASH, AuditLogger
 
         logger = AuditLogger()
 
@@ -263,7 +259,7 @@ class TestPrivacyInvariants:
     @pytest.mark.regression
     def test_dp_noise_applied(self):
         """Verify gradient clipping works correctly."""
-        from tensorguard.platform.tg_tinker_api.dp import clip_gradients, add_noise
+        from tensorguard.platform.tg_tinker_api.dp import add_noise, clip_gradients
 
         # Test gradient clipping with scalar norm values
         grad_norm = 10.0  # Large gradient norm
@@ -309,12 +305,13 @@ class TestPrivacyInvariants:
     @pytest.mark.regression
     def test_no_plaintext_in_memory_artifacts(self):
         """Verify artifacts don't leak plaintext to predictable memory locations."""
+        import gc
+
         from tensorguard.platform.tg_tinker_api.storage import (
-            LocalStorageBackend,
             EncryptedArtifactStore,
             KeyManager,
+            LocalStorageBackend,
         )
-        import gc
 
         with tempfile.TemporaryDirectory() as tmpdir:
             backend = LocalStorageBackend(tmpdir)

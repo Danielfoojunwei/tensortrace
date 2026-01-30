@@ -323,9 +323,7 @@ async def list_training_clients(
     tenant_id: str = Depends(get_tenant_id),
 ) -> List[TrainingClientResponse]:
     """List all training clients for the tenant."""
-    clients = [
-        tc for tc in _training_clients.values() if tc.tenant_id == tenant_id
-    ]
+    clients = [tc for tc in _training_clients.values() if tc.tenant_id == tenant_id]
 
     return [
         TrainingClientResponse(
@@ -351,7 +349,13 @@ async def get_training_client(
     if tc is None or tc.tenant_id != tenant_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail={"error": {"code": "TRAINING_CLIENT_NOT_FOUND", "message": f"Training client '{tc_id}' not found", "details": {"training_client_id": tc_id}}},
+            detail={
+                "error": {
+                    "code": "TRAINING_CLIENT_NOT_FOUND",
+                    "message": f"Training client '{tc_id}' not found",
+                    "details": {"training_client_id": tc_id},
+                }
+            },
         )
 
     dp_metrics = None

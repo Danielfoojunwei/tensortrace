@@ -149,13 +149,9 @@ class InMemoryJobQueue(JobQueueBackend):
         """Get count of pending jobs."""
         with self._lock:
             if tenant_id is None:
-                return sum(
-                    1 for job in self._jobs.values() if job.status == JobStatus.PENDING
-                )
+                return sum(1 for job in self._jobs.values() if job.status == JobStatus.PENDING)
             return sum(
-                1
-                for job in self._jobs.values()
-                if job.status == JobStatus.PENDING and job.tenant_id == tenant_id
+                1 for job in self._jobs.values() if job.status == JobStatus.PENDING and job.tenant_id == tenant_id
             )
 
 
@@ -210,9 +206,7 @@ class JobQueue:
         # Check pending count
         pending = self.backend.get_pending_count(tenant_id)
         if pending >= self.max_pending_per_tenant:
-            raise RuntimeError(
-                f"Tenant {tenant_id} has too many pending jobs ({pending})"
-            )
+            raise RuntimeError(f"Tenant {tenant_id} has too many pending jobs ({pending})")
 
         # Compute payload hash (for audit logging, privacy-preserving)
         payload_json = json.dumps(payload, sort_keys=True, default=str)

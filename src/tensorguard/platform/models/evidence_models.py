@@ -8,6 +8,7 @@ from sqlmodel import Field, SQLModel
 
 class EvidenceRecord(SQLModel, table=True):
     """Compliance evidence record."""
+
     __tablename__ = "evidence_records"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -23,6 +24,7 @@ class EvidenceRecord(SQLModel, table=True):
 
 class ComplianceReport(SQLModel, table=True):
     """Generated compliance report."""
+
     __tablename__ = "compliance_reports"
 
     id: Optional[int] = Field(default=None, primary_key=True)

@@ -40,7 +40,7 @@ if not SECRET_KEY:
     if is_production():
         require_env(
             "TG_SECRET_KEY",
-            remediation="Set TG_SECRET_KEY environment variable: export TG_SECRET_KEY=$(python -c \"import secrets; print(secrets.token_hex(32))\")",
+            remediation='Set TG_SECRET_KEY environment variable: export TG_SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")',
             min_length=32,
         )
     else:
@@ -80,8 +80,8 @@ pwd_context = CryptContext(
     schemes=["argon2"],
     deprecated="auto",
     argon2__memory_cost=65536,  # 64 MiB
-    argon2__time_cost=3,        # 3 iterations
-    argon2__parallelism=4,      # 4 threads
+    argon2__time_cost=3,  # 3 iterations
+    argon2__parallelism=4,  # 4 threads
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token", auto_error=False)
@@ -89,6 +89,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token", auto_error=False)
 
 class PasswordValidationError(ValueError):
     """Raised when password doesn't meet security requirements."""
+
     pass
 
 
@@ -100,15 +101,13 @@ def validate_password_strength(password: str) -> None:
         PasswordValidationError: If password doesn't meet requirements
     """
     if len(password) < MIN_PASSWORD_LENGTH:
-        raise PasswordValidationError(
-            f"Password must be at least {MIN_PASSWORD_LENGTH} characters"
-        )
+        raise PasswordValidationError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
 
     if REQUIRE_PASSWORD_COMPLEXITY:
         checks = [
-            (r'[a-z]', "lowercase letter"),
-            (r'[A-Z]', "uppercase letter"),
-            (r'\d', "digit"),
+            (r"[a-z]", "lowercase letter"),
+            (r"[A-Z]", "uppercase letter"),
+            (r"\d", "digit"),
             (r'[!@#$%^&*(),.?":{}|<>]', "special character"),
         ]
         missing = []
@@ -117,9 +116,7 @@ def validate_password_strength(password: str) -> None:
                 missing.append(name)
 
         if missing:
-            raise PasswordValidationError(
-                f"Password must contain: {', '.join(missing)}"
-            )
+            raise PasswordValidationError(f"Password must contain: {', '.join(missing)}")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -146,11 +143,7 @@ def get_password_hash(password: str, validate: bool = True) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(
-    data: dict,
-    expires_delta: Optional[timedelta] = None,
-    token_type: str = "access"
-) -> str:
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None, token_type: str = "access") -> str:
     """
     Create a JWT access token with security claims.
 
@@ -173,14 +166,16 @@ def create_access_token(
         expire = now + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     # Add standard JWT claims
-    to_encode.update({
-        "exp": expire,
-        "iat": now,
-        "iss": TOKEN_ISSUER,
-        "aud": TOKEN_AUDIENCE,
-        "type": token_type,
-        "jti": secrets.token_hex(16),  # Unique token ID for revocation
-    })
+    to_encode.update(
+        {
+            "exp": expire,
+            "iat": now,
+            "iss": TOKEN_ISSUER,
+            "aud": TOKEN_AUDIENCE,
+            "type": token_type,
+            "jti": secrets.token_hex(16),  # Unique token ID for revocation
+        }
+    )
 
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -188,15 +183,11 @@ def create_access_token(
 
 def create_refresh_token(data: dict) -> str:
     """Create a long-lived refresh token."""
-    return create_access_token(
-        data,
-        expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS),
-        token_type="refresh"
-    )
+    return create_access_token(data, expires_delta=timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS), token_type="refresh")
+
 
 async def get_current_user(
-    token: Optional[str] = Depends(oauth2_scheme),
-    session: Session = Depends(get_session)
+    token: Optional[str] = Depends(oauth2_scheme), session: Session = Depends(get_session)
 ) -> User:
     """
     Validate JWT token and return the authenticated user.
@@ -218,8 +209,7 @@ async def get_current_user(
         if os.getenv("TG_ENVIRONMENT", "development") == "production":
             logger.critical("SECURITY VIOLATION: TG_DEMO_MODE=true in production environment!")
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Demo mode is not allowed in production"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Demo mode is not allowed in production"
             )
         if not token:
             logger.warning("DEMO MODE: Returning demo user (no token required) - NOT FOR PRODUCTION")
@@ -229,7 +219,7 @@ async def get_current_user(
                 name="Demo User",
                 role=UserRole.ORG_ADMIN,
                 tenant_id="fceac734-e672-4a0c-863b-c7bb8e28b88e",
-                hashed_password="N/A"
+                hashed_password="N/A",
             )
             return demo_user
     # --- END DEMO MODE ---
@@ -271,14 +261,12 @@ async def get_current_user(
         raise credentials_exception
 
     # Check if user is active (if such field exists)
-    if hasattr(user, 'is_active') and not user.is_active:
+    if hasattr(user, "is_active") and not user.is_active:
         logger.warning(f"Inactive user attempted access: {email}")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is disabled"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is disabled")
 
     return user
+
 
 class RoleChecker:
     """
@@ -296,19 +284,16 @@ class RoleChecker:
     async def __call__(self, user: User = Depends(get_current_user)) -> User:
         if user.role not in self.allowed_roles:
             logger.warning(
-                f"RBAC denied: user={user.email} role={user.role} "
-                f"required={[r.value for r in self.allowed_roles]}"
+                f"RBAC denied: user={user.email} role={user.role} required={[r.value for r in self.allowed_roles]}"
             )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Operation not permitted for your role"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Operation not permitted for your role")
         return user
 
 
 # ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
+
 
 def require_roles(*roles: UserRole):
     """

@@ -33,23 +33,18 @@ TAG_SIZE = 16
 @dataclass
 class HPKESealResult:
     """Result of HPKE seal operation."""
+
     enc: bytes  # Encapsulated key (ephemeral public key)
     ciphertext: bytes  # Encrypted data with authentication tag
 
     def to_dict(self) -> Dict[str, str]:
         """Serialize to hex-encoded dictionary for transport."""
-        return {
-            "enc": self.enc.hex(),
-            "ciphertext": self.ciphertext.hex()
-        }
+        return {"enc": self.enc.hex(), "ciphertext": self.ciphertext.hex()}
 
     @classmethod
     def from_dict(cls, data: Dict[str, str]) -> "HPKESealResult":
         """Deserialize from hex-encoded dictionary."""
-        return cls(
-            enc=bytes.fromhex(data["enc"]),
-            ciphertext=bytes.fromhex(data["ciphertext"])
-        )
+        return cls(enc=bytes.fromhex(data["enc"]), ciphertext=bytes.fromhex(data["ciphertext"]))
 
 
 def _labeled_extract(salt: bytes, label: bytes, ikm: bytes, suite_id: bytes) -> bytes:
@@ -62,21 +57,15 @@ def _labeled_extract(salt: bytes, label: bytes, ikm: bytes, suite_id: bytes) -> 
         length=32,
         salt=salt if salt else b"\x00" * 32,
         info=labeled_ikm,
-        backend=default_backend()
+        backend=default_backend(),
     )
     return hkdf.derive(ikm)
 
 
 def _labeled_expand(prk: bytes, label: bytes, info: bytes, length: int, suite_id: bytes) -> bytes:
     """HPKE LabeledExpand (RFC 9180 Section 4)."""
-    labeled_info = length.to_bytes(2, 'big') + b"HPKE-v1" + suite_id + label + info
-    hkdf = HKDF(
-        algorithm=hashes.SHA256(),
-        length=length,
-        salt=prk,
-        info=labeled_info,
-        backend=default_backend()
-    )
+    labeled_info = length.to_bytes(2, "big") + b"HPKE-v1" + suite_id + label + info
+    hkdf = HKDF(algorithm=hashes.SHA256(), length=length, salt=prk, info=labeled_info, backend=default_backend())
     return hkdf.derive(b"\x00" * length)
 
 
@@ -86,37 +75,22 @@ def _derive_key_and_nonce(shared_secret: bytes, info: bytes = b"") -> Tuple[byte
     ks_context = b"\x00" + info  # mode_base (0x00) + info
 
     secret = HKDF(
-        algorithm=hashes.SHA256(),
-        length=KEY_SIZE,
-        salt=None,
-        info=b"secret" + ks_context,
-        backend=default_backend()
+        algorithm=hashes.SHA256(), length=KEY_SIZE, salt=None, info=b"secret" + ks_context, backend=default_backend()
     ).derive(shared_secret)
 
     key = HKDF(
-        algorithm=hashes.SHA256(),
-        length=KEY_SIZE,
-        salt=None,
-        info=b"key" + secret,
-        backend=default_backend()
+        algorithm=hashes.SHA256(), length=KEY_SIZE, salt=None, info=b"key" + secret, backend=default_backend()
     ).derive(secret)
 
     base_nonce = HKDF(
-        algorithm=hashes.SHA256(),
-        length=NONCE_SIZE,
-        salt=None,
-        info=b"base_nonce" + secret,
-        backend=default_backend()
+        algorithm=hashes.SHA256(), length=NONCE_SIZE, salt=None, info=b"base_nonce" + secret, backend=default_backend()
     ).derive(secret)
 
     return key, base_nonce
 
 
 def hpke_seal(
-    plaintext: bytes,
-    recipient_public_key: x25519.X25519PublicKey,
-    info: bytes = b"",
-    aad: bytes = b""
+    plaintext: bytes, recipient_public_key: x25519.X25519PublicKey, info: bytes = b"", aad: bytes = b""
 ) -> Dict[str, str]:
     """
     HPKE Seal: Encrypt plaintext to recipient's public key.
@@ -138,10 +112,7 @@ def hpke_seal(
     ephemeral_public = ephemeral_private.public_key()
 
     # Encapsulated key is the ephemeral public key
-    enc = ephemeral_public.public_bytes(
-        encoding=serialization.Encoding.Raw,
-        format=serialization.PublicFormat.Raw
-    )
+    enc = ephemeral_public.public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
 
     # Compute shared secret via ECDH
     shared_secret = ephemeral_private.exchange(recipient_public_key)
@@ -158,10 +129,7 @@ def hpke_seal(
 
 
 def hpke_open(
-    sealed: Dict[str, str],
-    recipient_private_key: x25519.X25519PrivateKey,
-    info: bytes = b"",
-    aad: bytes = b""
+    sealed: Dict[str, str], recipient_private_key: x25519.X25519PrivateKey, info: bytes = b"", aad: bytes = b""
 ) -> bytes:
     """
     HPKE Open: Decrypt ciphertext using recipient's private key.
@@ -212,10 +180,7 @@ def generate_keypair() -> Tuple[x25519.X25519PrivateKey, x25519.X25519PublicKey]
 
 def public_key_to_bytes(public_key: x25519.X25519PublicKey) -> bytes:
     """Serialize X25519 public key to raw bytes."""
-    return public_key.public_bytes(
-        encoding=serialization.Encoding.Raw,
-        format=serialization.PublicFormat.Raw
-    )
+    return public_key.public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
 
 
 def private_key_to_bytes(private_key: x25519.X25519PrivateKey) -> bytes:
@@ -223,5 +188,5 @@ def private_key_to_bytes(private_key: x25519.X25519PrivateKey) -> bytes:
     return private_key.private_bytes(
         encoding=serialization.Encoding.Raw,
         format=serialization.PrivateFormat.Raw,
-        encryption_algorithm=serialization.NoEncryption()
+        encryption_algorithm=serialization.NoEncryption(),
     )

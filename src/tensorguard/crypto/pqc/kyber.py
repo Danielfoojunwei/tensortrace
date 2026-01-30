@@ -24,14 +24,12 @@ _oqs = None
 
 try:
     import oqs
+
     _oqs = oqs
     _LIBOQS_AVAILABLE = True
     logger.info("liboqs loaded successfully - using production PQC")
 except ImportError:
-    logger.error(
-        "liboqs not available. Install with: pip install liboqs-python "
-        "(requires liboqs native library)."
-    )
+    logger.error("liboqs not available. Install with: pip install liboqs-python (requires liboqs native library).")
 
 
 class Kyber768(PostQuantumKEM):
@@ -62,9 +60,7 @@ class Kyber768(PostQuantumKEM):
     def __init__(self):
         """Initialize Kyber-768 KEM."""
         if not _LIBOQS_AVAILABLE:
-            raise ImportError(
-                "Kyber768 requires liboqs. Install liboqs-python with the liboqs native library."
-            )
+            raise ImportError("Kyber768 requires liboqs. Install liboqs-python with the liboqs native library.")
         self._kem = _oqs.KeyEncapsulation("ML-KEM-768")
         logger.debug("Kyber768 initialized with liboqs ML-KEM-768")
 

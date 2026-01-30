@@ -8,6 +8,7 @@ from sqlmodel import Field, SQLModel
 
 class IdentityEndpoint(SQLModel, table=True):
     """Identity service endpoint configuration."""
+
     __tablename__ = "identity_endpoints"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -22,6 +23,7 @@ class IdentityEndpoint(SQLModel, table=True):
 
 class IdentityCertificate(SQLModel, table=True):
     """Certificate store for mTLS and code signing."""
+
     __tablename__ = "identity_certificates"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -41,6 +43,7 @@ class IdentityCertificate(SQLModel, table=True):
 
 class IdentityPolicy(SQLModel, table=True):
     """Access policy for identity verification."""
+
     __tablename__ = "identity_policies"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -56,6 +59,7 @@ class IdentityPolicy(SQLModel, table=True):
 
 class IdentityRenewalJob(SQLModel, table=True):
     """Certificate renewal job tracking."""
+
     __tablename__ = "identity_renewal_jobs"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -70,6 +74,7 @@ class IdentityRenewalJob(SQLModel, table=True):
 
 class IdentityAuditLog(SQLModel, table=True):
     """Identity-specific audit log."""
+
     __tablename__ = "identity_audit_logs"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -85,6 +90,7 @@ class IdentityAuditLog(SQLModel, table=True):
 
 class IdentityAgent(SQLModel, table=True):
     """Registered identity agent (workload/service)."""
+
     __tablename__ = "identity_agents"
 
     id: Optional[int] = Field(default=None, primary_key=True)

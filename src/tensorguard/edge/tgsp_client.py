@@ -10,11 +10,13 @@ from ..utils.exceptions import TGSPClientError
 
 logger = logging.getLogger(__name__)
 
+
 class TGSPEdgeClient:
     """
     Edge-side SDK for interacting with TensorGuard TGSP Platform.
     Handles artifact pulling, local verification, and secure decryption.
     """
+
     def __init__(self, server_url: str, timeout: int = 30):
         self.server_url = server_url.rstrip("/")
         self.timeout = timeout
@@ -25,7 +27,7 @@ class TGSPEdgeClient:
             total=3,
             backoff_factor=1,
             status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["HEAD", "GET", "OPTIONS"]
+            allowed_methods=["HEAD", "GET", "OPTIONS"],
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("http://", adapter)
@@ -44,17 +46,18 @@ class TGSPEdgeClient:
 
     def download_to_temp(self, pkg_meta: dict, temp_dir: str = "/tmp") -> str:
         """
-        Download the physical .tgsp file. 
+        Download the physical .tgsp file.
         In Community Mode, we assume the server provides a download URL or path.
         """
         # For simplicity in this env, we use the storage_path if local,
         # but in a real system we would use a download endpoint.
-        local_src = pkg_meta.get('storage_path')
+        local_src = pkg_meta.get("storage_path")
         if not local_src or not os.path.exists(local_src):
-             raise FileNotFoundError(f"Package file not found at {local_src}")
+            raise FileNotFoundError(f"Package file not found at {local_src}")
 
-        dest = os.path.join(temp_dir, pkg_meta['filename'])
+        dest = os.path.join(temp_dir, pkg_meta["filename"])
         import shutil
+
         shutil.copy2(local_src, dest)
         return dest
 
@@ -71,8 +74,10 @@ class TGSPEdgeClient:
         TGSPService.decrypt_package(package_path, recipient_id, recipient_key_path, out_dir)
         return True
 
+
 def cli_main():
     import argparse
+
     parser = argparse.ArgumentParser(description="TensorGuard Edge CLI")
     parser.add_argument("--server", default="http://127.0.0.1:8000")
     parser.add_argument("--fleet-id", required=True)
@@ -100,6 +105,7 @@ def cli_main():
 
     except Exception as e:
         print(f"Error: {e}")
+
 
 if __name__ == "__main__":
     cli_main()

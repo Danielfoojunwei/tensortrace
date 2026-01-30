@@ -8,6 +8,7 @@ from sqlmodel import Field, SQLModel
 
 class TGFlowPipeline(SQLModel, table=True):
     """TGFlow pipeline definition."""
+
     __tablename__ = "tgflow_pipelines"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -23,6 +24,7 @@ class TGFlowPipeline(SQLModel, table=True):
 
 class TGFlowRun(SQLModel, table=True):
     """TGFlow pipeline execution."""
+
     __tablename__ = "tgflow_runs"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -38,6 +40,7 @@ class TGFlowRun(SQLModel, table=True):
 
 class TGFlowStep(SQLModel, table=True):
     """TGFlow pipeline step execution."""
+
     __tablename__ = "tgflow_steps"
 
     id: Optional[int] = Field(default=None, primary_key=True)

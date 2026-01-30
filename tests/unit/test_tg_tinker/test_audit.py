@@ -7,8 +7,8 @@ from datetime import datetime, timedelta
 import pytest
 
 from tensorguard.platform.tg_tinker_api.audit import (
-    AuditLogger,
     GENESIS_HASH,
+    AuditLogger,
 )
 
 

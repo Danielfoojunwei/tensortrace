@@ -194,9 +194,7 @@ class LWECiphertext:
     def __post_init__(self):
         if self.noise_budget is None:
             # Estimate initial noise budget based on parameters
-            self.noise_budget = float(
-                np.log2(self.params.q) - np.log2(self.params.t) - 10
-            )
+            self.noise_budget = float(np.log2(self.params.q) - np.log2(self.params.t) - 10)
 
     def to_bytes(self) -> bytes:
         """Serialize to bytes."""
@@ -219,7 +217,7 @@ class LWECiphertext:
         header = struct.unpack(">BBIQ", data[:header_size])
         _, level, n, b = header
 
-        a = np.frombuffer(data[header_size:header_size + n * 4], dtype=np.int32)
+        a = np.frombuffer(data[header_size : header_size + n * 4], dtype=np.int32)
         return cls(a=a, b=b, params=params, level=level)
 
 
@@ -245,9 +243,7 @@ class RLWECiphertext:
 
     def __post_init__(self):
         if self.noise_budget is None:
-            self.noise_budget = float(
-                np.log2(self.params.q) - np.log2(self.params.t) - 10
-            )
+            self.noise_budget = float(np.log2(self.params.q) - np.log2(self.params.t) - 10)
 
     def to_bytes(self) -> bytes:
         """Serialize to bytes."""
@@ -269,11 +265,11 @@ class RLWECiphertext:
         level, _, n = struct.unpack(">BBI", data[:header_size])
 
         scale_size = struct.calcsize(">d")
-        scale = struct.unpack(">d", data[header_size:header_size + scale_size])[0]
+        scale = struct.unpack(">d", data[header_size : header_size + scale_size])[0]
 
         offset = header_size + scale_size
-        c0 = np.frombuffer(data[offset:offset + n * 8], dtype=np.int64)
-        c1 = np.frombuffer(data[offset + n * 8:offset + 2 * n * 8], dtype=np.int64)
+        c0 = np.frombuffer(data[offset : offset + n * 8], dtype=np.int64)
+        c1 = np.frombuffer(data[offset + n * 8 : offset + 2 * n * 8], dtype=np.int64)
 
         return cls(c0=c0, c1=c1, params=params, level=level, scale=scale)
 
@@ -333,16 +329,12 @@ class N2HEScheme(ABC):
         pass
 
     @abstractmethod
-    def multiply(
-        self, ct: Ciphertext, plaintext: np.ndarray
-    ) -> Ciphertext:
+    def multiply(self, ct: Ciphertext, plaintext: np.ndarray) -> Ciphertext:
         """Multiply ciphertext by plaintext (scalar/vector)."""
         pass
 
     @abstractmethod
-    def matmul(
-        self, ct: Ciphertext, weight_matrix: np.ndarray, ek: bytes
-    ) -> Ciphertext:
+    def matmul(self, ct: Ciphertext, weight_matrix: np.ndarray, ek: bytes) -> Ciphertext:
         """
         Encrypted matrix multiplication: ct @ W^T.
 
@@ -453,9 +445,7 @@ class ToyN2HEScheme(N2HEScheme):
             noise_budget=min(ct1.noise_budget or 0, ct2.noise_budget or 0) - 1,
         )
 
-    def multiply(
-        self, ct: LWECiphertext, plaintext: np.ndarray
-    ) -> LWECiphertext:
+    def multiply(self, ct: LWECiphertext, plaintext: np.ndarray) -> LWECiphertext:
         """Multiply ciphertext by plaintext scalar."""
         q = self.params.q
         scalar = int(plaintext.item()) if plaintext.size == 1 else int(plaintext[0])
@@ -467,9 +457,7 @@ class ToyN2HEScheme(N2HEScheme):
             noise_budget=(ct.noise_budget or 0) - np.log2(abs(scalar) + 1),
         )
 
-    def matmul(
-        self, ct: LWECiphertext, weight_matrix: np.ndarray, ek: bytes
-    ) -> LWECiphertext:
+    def matmul(self, ct: LWECiphertext, weight_matrix: np.ndarray, ek: bytes) -> LWECiphertext:
         """
         Encrypted matrix multiplication (simulated).
 
@@ -487,7 +475,7 @@ class ToyN2HEScheme(N2HEScheme):
         # Transform 'a' vector (simulated key-switching)
         transform_hash = hashlib.sha256(ek + weight_matrix.tobytes()).digest()
         transform = np.frombuffer(transform_hash * (len(ct.a) // 32 + 1), dtype=np.uint8)
-        transform = transform[:len(ct.a)]
+        transform = transform[: len(ct.a)]
 
         new_a = (ct.a.astype(np.int64) + transform.astype(np.int64)) % q
 
@@ -534,10 +522,7 @@ class N2HEContext:
     def generate_keys(self) -> None:
         """Generate fresh key material."""
         self._sk, self._pk, self._ek = self.scheme.keygen()
-        logger.info(
-            f"Generated N2HE keys: sk={len(self._sk)}B, "
-            f"pk={len(self._pk)}B, ek={len(self._ek)}B"
-        )
+        logger.info(f"Generated N2HE keys: sk={len(self._sk)}B, pk={len(self._pk)}B, ek={len(self._ek)}B")
 
     def load_keys(
         self,
@@ -668,11 +653,8 @@ class N2HEContext:
             self._operations_count += 1
 
         # Track noise growth
-        if hasattr(result, 'noise_budget'):
-            self._total_noise_growth += (
-                (encrypted_activation.noise_budget or 0) -
-                (result.noise_budget or 0)
-            )
+        if hasattr(result, "noise_budget"):
+            self._total_noise_growth += (encrypted_activation.noise_budget or 0) - (result.noise_budget or 0)
 
         return result
 
@@ -719,6 +701,7 @@ def create_context(
         # Try to import real N2HE
         try:
             from tensorguard.n2he._native import NativeN2HEScheme
+
             scheme = NativeN2HEScheme(params)
             logger.info("Using native N2HE scheme")
         except ImportError:

@@ -102,7 +102,7 @@ async def health_check():
         "timestamp": datetime.utcnow().isoformat(),
         "version": "3.0.0",
         "environment": TG_ENVIRONMENT,
-        "checks": {"database": db_health}
+        "checks": {"database": db_health},
     }
 
 
@@ -112,9 +112,7 @@ async def readiness_check():
     db_health = check_db_health()
     if db_health["status"] != "healthy":
         return Response(
-            content='{"ready": false, "reason": "database unavailable"}',
-            status_code=503,
-            media_type="application/json"
+            content='{"ready": false, "reason": "database unavailable"}', status_code=503, media_type="application/json"
         )
     return {"ready": True}
 
@@ -139,11 +137,12 @@ async def root():
         "description": "Privacy-First ML Training API",
         "docs": "/docs",
         "health": "/health",
-        "api": "/api/v1/training_clients"
+        "api": "/api/v1/training_clients",
     }
 
 
 if __name__ == "__main__":
     import uvicorn
+
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)

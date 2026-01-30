@@ -8,6 +8,7 @@ from sqlmodel import Field, SQLModel
 
 class IntegrationConfig(SQLModel, table=True):
     """External integration configuration."""
+
     __tablename__ = "integration_configs"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -24,6 +25,7 @@ class IntegrationConfig(SQLModel, table=True):
 
 class PeftWizardDraft(SQLModel, table=True):
     """PEFT configuration wizard draft."""
+
     __tablename__ = "peft_wizard_drafts"
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -39,6 +41,7 @@ class PeftWizardDraft(SQLModel, table=True):
 
 class PeftRun(SQLModel, table=True):
     """PEFT training run."""
+
     __tablename__ = "peft_runs"
 
     id: Optional[int] = Field(default=None, primary_key=True)
