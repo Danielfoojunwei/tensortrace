@@ -394,25 +394,36 @@ make bench-n2he         # N2HE homomorphic encryption benchmark
 
 ### N2HE Homomorphic Encryption Benchmarks
 
-N2HE homomorphic encryption operations:
+N2HE homomorphic encryption operations (E2E test results):
 
-| Operation | Latency (p50) | Throughput | Notes |
+| Operation | Latency (mean) | Throughput | Notes |
 |-----------|---------------|------------|-------|
-| **keygen** | 0.155ms | 6,460 ops/sec | LWE key generation |
-| **encryption** | 0.019ms | 53,375 ops/sec | Single plaintext → ciphertext |
-| **decryption** | 0.015ms | 66,667 ops/sec | Ciphertext → plaintext |
-| **lora_delta (rank=16)** | 0.082ms | 12,228 ops/sec | Encrypted LoRA computation |
-| **matmul (16x16)** | 0.045ms | 22,222 ops/sec | Encrypted matrix multiply |
-| **add** | 0.003ms | 333,333 ops/sec | Homomorphic addition |
+| **keygen** | 0.114ms | 8,751 ops/sec | LWE key generation |
+| **key_bundle** | 2.90ms | 345 ops/sec | Full key bundle generation |
+| **encryption** | 0.022ms | 46,014 ops/sec | Single plaintext → ciphertext |
+| **decryption** | 0.002ms | 500,000 ops/sec | Ciphertext → plaintext |
+| **lora_delta** | 0.676ms | 1,479 ops/sec | Encrypted LoRA computation |
+| **lora_forward** | 55.66ms | 18 ops/sec | Full forward pass (4 adapters) |
+| **matmul (8x8)** | 0.064ms | 15,625 ops/sec | Encrypted matrix multiply |
+| **matmul (16x16)** | 0.039ms | 25,641 ops/sec | Encrypted matrix multiply |
+| **add** | 0.008ms | 125,000 ops/sec | Homomorphic addition |
+| **multiply** | 0.010ms | 100,000 ops/sec | Homomorphic scalar multiply |
+| **private_inference** | 4.12ms | 243 ops/sec | Per-prompt encrypted inference |
 
 **Ciphertext Serialization:**
 
-| Format | Serialize | Deserialize | Size Ratio |
-|--------|-----------|-------------|------------|
-| **Binary** | 0.12ms | 0.08ms | 1.0x (baseline) |
-| **JSON** | 0.45ms | 0.32ms | 2.8x |
-| **Base64** | 0.18ms | 0.15ms | 1.33x |
-| **Binary+Compression** | 0.25ms | 0.18ms | 0.7x |
+| Format | Serialize | Deserialize | Size |
+|--------|-----------|-------------|------|
+| **Binary** | 0.073ms | 0.068ms | 4,120 bytes |
+| **JSON** | 0.084ms | - | ~11,500 bytes |
+| **Base64** | 0.082ms | - | ~5,500 bytes |
+
+**Ciphertext Bundles:**
+
+| Bundle Size | Creation Time | Total Size |
+|-------------|---------------|------------|
+| 10 ciphertexts | 0.97ms | 41,200 bytes |
+| 50 ciphertexts | 4.61ms | 206,000 bytes |
 
 ---
 
@@ -482,12 +493,15 @@ These timings are based on:
 | account_step | 0.01ms | 0.01ms | 0.01ms | Per-step |
 | convert_to_dp | 0.00ms | 0.00ms | 0.00ms | (ε,δ) conversion |
 | **N2HE** |
-| keygen | 0.15ms | 0.18ms | 0.16ms | LWE key generation |
+| keygen | 0.11ms | 0.14ms | 0.11ms | LWE key generation |
+| key_bundle | 2.90ms | 3.10ms | 2.90ms | Full bundle generation |
 | encrypt | 0.02ms | 0.03ms | 0.02ms | Plaintext → ciphertext |
-| decrypt | 0.01ms | 0.02ms | 0.01ms | Ciphertext → plaintext |
-| lora_delta | 0.08ms | 0.12ms | 0.08ms | Encrypted LoRA (rank=16) |
-| serialize_binary | 0.12ms | 0.15ms | 0.12ms | Ciphertext to bytes |
-| deserialize_binary | 0.08ms | 0.10ms | 0.08ms | Bytes to ciphertext |
+| decrypt | 0.002ms | 0.003ms | 0.002ms | Ciphertext → plaintext |
+| lora_delta | 0.68ms | 0.72ms | 0.68ms | Encrypted LoRA (rank=16) |
+| lora_forward | 55.66ms | 58.0ms | 55.66ms | Full forward (4 adapters) |
+| private_inference | 4.12ms | 4.50ms | 4.12ms | Per-prompt HE inference |
+| serialize_binary | 0.07ms | 0.08ms | 0.07ms | Ciphertext to bytes |
+| deserialize_binary | 0.07ms | 0.08ms | 0.07ms | Bytes to ciphertext |
 
 ### Privacy Features Overhead Summary
 
