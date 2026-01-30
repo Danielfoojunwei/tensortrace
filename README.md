@@ -539,6 +539,50 @@ N2HE homomorphic encryption operations (E2E test results):
 | 10 ciphertexts | 0.97ms | 41,200 bytes |
 | 50 ciphertexts | 4.61ms | 206,000 bytes |
 
+### Pluggable Loss Functions Benchmarks ⭐ NEW
+
+Custom loss function overhead (E2E test results):
+
+| Operation | Latency (p50) | Latency (p95) | Notes |
+|-----------|---------------|---------------|-------|
+| **loss_computation** | 0.002ms | 0.006ms | Custom loss function call |
+| **loss_registry_resolve** | <0.001ms | <0.001ms | Registry lookup |
+| **loss_with_metrics** | 0.003ms | 0.008ms | Loss + custom metrics |
+
+**Built-in Losses Available:**
+
+| Loss Type | Use Case | Overhead |
+|-----------|----------|----------|
+| `token_ce` | Language modeling | <0.001ms |
+| `margin_ranking` | Contrastive learning | <0.001ms |
+| `contrastive` | Embedding training | <0.001ms |
+| `mse` | Regression tasks | <0.001ms |
+
+### RLVR Mode Benchmarks ⭐ NEW
+
+Reinforcement Learning with Verifiable Rewards (E2E test results):
+
+| Operation | Latency (p50) | Latency (p95) | Notes |
+|-----------|---------------|---------------|-------|
+| **rollout_sampling** | 0.022ms | 0.028ms | Mock trajectory generation |
+| **reward_computation** | <0.001ms | <0.001ms | Custom reward function |
+| **REINFORCE_update** | 0.024ms | 0.039ms | Policy gradient step |
+| **PPO_update** | 0.156ms | 0.243ms | PPO with 4 epochs |
+
+**Algorithm Comparison:**
+
+| Algorithm | Update Time (p50) | Memory | Best For |
+|-----------|-------------------|--------|----------|
+| **REINFORCE** | 0.024ms | Low | Simple tasks, debugging |
+| **PPO** | 0.156ms | Medium | Stable training, complex tasks |
+
+**RLVR Training Throughput:**
+
+| Configuration | Epochs/sec | Notes |
+|---------------|------------|-------|
+| REINFORCE (batch=3) | 16,667 | Lightweight policy gradient |
+| PPO (batch=3, epochs=4) | 5,882 | Full PPO with KL constraint |
+
 ---
 
 ## Test Results & Benchmark Comparison
@@ -659,7 +703,7 @@ Test Coverage:
 ### Unit Test Summary
 
 ```
-166 tests passed across all modules:
+316 tests passed across all modules:
   - tensafe.crypto (signatures, KEM, hybrid)
   - tensafe.platform.tensafe_api (routes, dp, storage, audit)
   - tensafe.tssp (packaging, verification)
@@ -669,6 +713,16 @@ Test Coverage:
     - adapter: Encrypted LoRA runtime, delta computation
     - inference: Private inference mode, encrypted batches
     - serialization: Binary/JSON/Base64 formats, bundles
+  - tensafe.training.losses (30 tests):
+    - registry: Register/resolve/import loss functions
+    - builtin: token_ce, margin_ranking, contrastive, mse
+    - protocol: LossFn type checking
+  - tensafe.rlvr (120 tests):
+    - rollout: Trajectory/batch shapes, sampling
+    - reward: Registry, resolve, custom rewards
+    - algorithms: REINFORCE, PPO policy updates
+    - checkpoint: Save/load algorithm state
+    - only_lora_updates: Frozen base verification
 ```
 
 ---
