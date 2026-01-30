@@ -123,6 +123,18 @@ async def liveness_check():
     return {"alive": True}
 
 
+@app.get("/version", tags=["health"])
+async def version_info():
+    """Version information endpoint."""
+    return {
+        "service": "TG-Tinker",
+        "version": "3.0.0",
+        "api_version": "v1",
+        "python_version": "3.9+",
+        "environment": TG_ENVIRONMENT,
+    }
+
+
 # TG-Tinker API routes
 app.include_router(tinker_router, prefix="/api")
 
