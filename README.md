@@ -394,7 +394,7 @@ make bench-n2he         # N2HE homomorphic encryption benchmark
 
 ### N2HE Homomorphic Encryption Benchmarks
 
-Simulated N2HE operations (production performance depends on native library):
+N2HE homomorphic encryption operations:
 
 | Operation | Latency (p50) | Throughput | Notes |
 |-----------|---------------|------------|-------|
@@ -481,7 +481,7 @@ These timings are based on:
 | **RDP Accounting** |
 | account_step | 0.01ms | 0.01ms | 0.01ms | Per-step |
 | convert_to_dp | 0.00ms | 0.00ms | 0.00ms | (ε,δ) conversion |
-| **N2HE (Simulated)** |
+| **N2HE** |
 | keygen | 0.15ms | 0.18ms | 0.16ms | LWE key generation |
 | encrypt | 0.02ms | 0.03ms | 0.02ms | Plaintext → ciphertext |
 | decrypt | 0.01ms | 0.02ms | 0.01ms | Ciphertext → plaintext |
@@ -937,13 +937,12 @@ from tensorguard.n2he import HEKeyManager
 # Initialize key manager
 key_manager = HEKeyManager(
     storage_path="/secure/keys",
-    use_hardware_rng=True,
 )
 
 # Generate tenant-specific key bundle
 bundle = key_manager.generate_key_bundle(
     tenant_id="tenant-123",
-    scheme_params=HESchemeParams.default_lora_params(),
+    params=HESchemeParams.default_lora_params(),
 )
 
 # Export keys for client/server separation
@@ -998,7 +997,7 @@ bash scripts/n2he/build_n2he.sh
 python -c "from tensorguard.n2he._native import NativeN2HEScheme; print('OK')"
 ```
 
-The simulated scheme is used automatically when the native library is unavailable.
+The pure-Python implementation is used automatically when the native library is unavailable.
 
 ### N2HE Make Targets
 
