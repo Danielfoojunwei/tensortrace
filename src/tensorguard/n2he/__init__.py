@@ -39,9 +39,15 @@ from .inference import (
 )
 from .serialization import (
     CiphertextFormat,
+    CiphertextSerializer,
+    CiphertextBundle,
+    SerializedCiphertext,
     serialize_ciphertext,
     deserialize_ciphertext,
+    create_ciphertext_bundle,
 )
+from .adapter import create_encrypted_runtime
+from .inference import create_private_inference_mode
 
 __all__ = [
     # Core
@@ -66,6 +72,13 @@ __all__ = [
     "EncryptedOutput",
     # Serialization
     "CiphertextFormat",
+    "CiphertextSerializer",
+    "CiphertextBundle",
+    "SerializedCiphertext",
     "serialize_ciphertext",
     "deserialize_ciphertext",
+    "create_ciphertext_bundle",
+    # Factory functions
+    "create_encrypted_runtime",
+    "create_private_inference_mode",
 ]
